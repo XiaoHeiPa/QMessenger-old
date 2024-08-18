@@ -1,4 +1,4 @@
-package org.cubewhy.playground.ui.theme
+package org.cubewhy.chat.theme
 
 import androidx.compose.ui.graphics.Color
 

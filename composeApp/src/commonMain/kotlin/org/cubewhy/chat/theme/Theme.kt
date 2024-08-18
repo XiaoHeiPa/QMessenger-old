@@ -7,12 +7,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import org.cubewhy.playground.ui.theme.Pink40
-import org.cubewhy.playground.ui.theme.Pink80
-import org.cubewhy.playground.ui.theme.Purple40
-import org.cubewhy.playground.ui.theme.Purple80
-import org.cubewhy.playground.ui.theme.PurpleGrey40
-import org.cubewhy.playground.ui.theme.PurpleGrey80
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
