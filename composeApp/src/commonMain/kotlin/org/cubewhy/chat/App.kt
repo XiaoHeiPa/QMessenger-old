@@ -50,7 +50,10 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.launch
 import org.cubewhy.chat.theme.QMessengerTheme
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import qmessenger.composeapp.generated.resources.Res
+import qmessenger.composeapp.generated.resources.app_name
 
 @Composable
 @Preview
@@ -108,7 +111,7 @@ fun LoginForm(modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = "Login", fontSize = 32.sp, color = MaterialTheme.colorScheme.onBackground)
+            Text(text = stringResource(Res.string.app_name), fontSize = 32.sp, color = MaterialTheme.colorScheme.onBackground)
             Spacer(modifier = Modifier.height(16.dp))
 
             TextField(
