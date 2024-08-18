@@ -1,6 +1,6 @@
 package org.cubewhy.chat
 
+import androidx.compose.runtime.Composable
+
 @Composable
-actual fun isDarkEnabled(): Boolean {
-    TODO("Not yet implemented")
-}
+actual fun isDarkEnabled(): Boolean = true
