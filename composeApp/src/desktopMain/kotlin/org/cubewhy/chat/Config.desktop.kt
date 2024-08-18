@@ -4,10 +4,11 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
 
+val configFile = getAppConfigDirectory().resolve("config.json").toPath()
+
 actual fun loadConfig(): AppConfig {
-    val path = Paths.get("config.json")
-    if (Files.exists(path)) {
-        val json = Files.readString(path)
+    if (Files.exists(configFile)) {
+        val json = Files.readString(configFile)
         return JSON.decodeFromString(json)
     }
     return AppConfig()
@@ -21,5 +22,5 @@ actual fun loadConfig(): AppConfig {
 }
 
 actual fun saveConfigToStorage(json: String) {
-    Files.writeString(getAppConfigDirectory().resolve("config.json").toPath(), json)
+    Files.writeString(configFile, json)
 }
