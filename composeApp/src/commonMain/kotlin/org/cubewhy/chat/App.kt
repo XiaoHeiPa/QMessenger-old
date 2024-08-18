@@ -41,6 +41,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -128,6 +130,7 @@ fun LoginForm(modifier: Modifier = Modifier) {
                     password = it
                     passwordError = password.length < 6
                 },
+                visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth().padding(8.dp)
             )
             if (passwordError) {
