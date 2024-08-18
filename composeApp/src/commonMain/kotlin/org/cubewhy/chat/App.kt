@@ -189,7 +189,7 @@ fun LoginForm(modifier: Modifier = Modifier) {
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(16.dp) // Padding from the edges
+                    .padding(16.dp)
             ) {
                 Text(
                     text = serverUrl,
