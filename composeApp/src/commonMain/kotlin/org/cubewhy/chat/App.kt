@@ -1,37 +1,91 @@
 package org.cubewhy.chat
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.runtime.*
+import androidx.compose.material.TextField
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.painterResource
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.ui.tooling.preview.Preview
-
-import qmessenger.composeapp.generated.resources.Res
-import qmessenger.composeapp.generated.resources.compose_multiplatform
 
 @Composable
 @Preview
 fun App() {
     MaterialTheme {
-        var showContent by remember { mutableStateOf(false) }
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-            Button(onClick = { showContent = !showContent }) {
-                Text("Click me!")
+            LoginForm()
+        }
+    }
+}
+
+@Composable
+fun LoginForm(modifier: Modifier = Modifier) {
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var passwordError by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier.fillMaxWidth(0.4f).padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = "Login", fontSize = 32.sp, color = Color.Black)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        TextField(
+            value = username,
+            placeholder = {
+                Text("Username")
+            },
+            onValueChange = {
+                username = it
+            },
+            modifier = Modifier.fillMaxWidth().padding(8.dp)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        TextField(
+            value = password,
+            placeholder = {
+                Text("Password")
+            },
+            onValueChange = {
+                password = it
+                passwordError = password.length < 6
+            },
+            modifier = Modifier.fillMaxWidth().padding(8.dp)
+        )
+        if (passwordError) {
+            Text(text = "Password must be at least 6 characters", color = Color.Red)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(onClick = {
+            if (passwordError || username.isEmpty() || password.isEmpty()) {
+                // Show error or handle validation
+            } else {
+                // Perform login
             }
-            AnimatedVisibility(showContent) {
-                val greeting = remember { Greeting().greet() }
-                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Image(painterResource(Res.drawable.compose_multiplatform), null)
-                    Text("Compose: $greeting")
-                }
-            }
+        }) {
+            Text(text = "Login")
         }
     }
 }
