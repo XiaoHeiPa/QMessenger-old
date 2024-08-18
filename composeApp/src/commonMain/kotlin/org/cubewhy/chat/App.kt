@@ -54,6 +54,10 @@ import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import qmessenger.composeapp.generated.resources.Res
 import qmessenger.composeapp.generated.resources.app_name
+import qmessenger.composeapp.generated.resources.login
+import qmessenger.composeapp.generated.resources.password
+import qmessenger.composeapp.generated.resources.password_length
+import qmessenger.composeapp.generated.resources.username
 
 @Composable
 @Preview
@@ -117,7 +121,7 @@ fun LoginForm(modifier: Modifier = Modifier) {
             TextField(
                 value = username,
                 placeholder = {
-                    Text("Username")
+                    Text(stringResource(Res.string.username))
                 },
                 onValueChange = {
                     username = it
@@ -130,7 +134,7 @@ fun LoginForm(modifier: Modifier = Modifier) {
             TextField(
                 value = password,
                 placeholder = {
-                    Text("Password")
+                    Text(stringResource(Res.string.password))
                 },
                 onValueChange = {
                     password = it
@@ -140,7 +144,7 @@ fun LoginForm(modifier: Modifier = Modifier) {
                 modifier = Modifier.fillMaxWidth().padding(8.dp)
             )
             if (passwordError) {
-                Text(text = "Password must be at least 6 characters", color = Color.Red)
+                Text(text = stringResource(Res.string.password_length), color = Color.Red)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -168,7 +172,7 @@ fun LoginForm(modifier: Modifier = Modifier) {
                         }
                     }
                 }) {
-                Text(text = "Login")
+                Text(text = stringResource(Res.string.login))
             }
         }
 
