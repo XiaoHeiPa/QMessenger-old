@@ -7,6 +7,3 @@ interface Platform {
 }
 
 expect fun getPlatform(): Platform
-
-@Composable
-expect fun isDarkEnabled(): Boolean

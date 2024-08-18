@@ -8,6 +8,3 @@ class WasmPlatform: Platform {
 }
 
 actual fun getPlatform(): Platform = WasmPlatform()
-
-@Composable
-actual fun isDarkEnabled(): Boolean = window.matchMedia("(prefers-color-scheme: dark)").matches
