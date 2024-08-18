@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
@@ -89,9 +90,11 @@ fun LoginForm(modifier: Modifier = Modifier) {
                 enter = slideInVertically() + expandIn(),
                 exit = slideOutVertically() + shrinkOut()
             ) {
-                FloatingActionButton(onClick = {
-                    showSwitchServerDialog = true
-                }) {
+                FloatingActionButton(
+                    shape = CircleShape,
+                    onClick = {
+                        showSwitchServerDialog = true
+                    }) {
                     Icon(
                         imageVector = Icons.Filled.Edit,
                         contentDescription = "Edit"
