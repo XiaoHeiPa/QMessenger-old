@@ -5,4 +5,7 @@
     <string name="password">密码</string>
     <string name="password_length">密码长度必须大于等于6个字符</string>
     <string name="login">登录</string>
+    <string name="server">聊天服务设置</string>
+    <string name="server_confirm">确认设置服务器</string>
+    <string name="server_address">聊天服务地址</string>
 </resources>

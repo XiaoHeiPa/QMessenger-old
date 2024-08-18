@@ -9,7 +9,6 @@ import androidx.compose.animation.expandIn
 import androidx.compose.animation.shrinkOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,7 +18,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
@@ -33,7 +31,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,8 +39,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -53,11 +51,9 @@ import org.cubewhy.chat.theme.QMessengerTheme
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import qmessenger.composeapp.generated.resources.Res
-import qmessenger.composeapp.generated.resources.app_name
-import qmessenger.composeapp.generated.resources.login
-import qmessenger.composeapp.generated.resources.password
-import qmessenger.composeapp.generated.resources.password_length
-import qmessenger.composeapp.generated.resources.username
+import qmessenger.composeapp.generated.resources.*
+
+val config = loadConfig()
 
 @Composable
 @Preview
@@ -86,6 +82,8 @@ fun LoginForm(modifier: Modifier = Modifier) {
         Animatable(0f)
     }
 
+    val haptic = LocalHapticFeedback.current
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         snackbarHost = {
@@ -94,8 +92,8 @@ fun LoginForm(modifier: Modifier = Modifier) {
         floatingActionButton = {
             AnimatedVisibility(
                 visible = !showSwitchServerDialog,
-                enter = slideInVertically() + expandIn(),
-                exit = slideOutVertically() + shrinkOut()
+                enter = slideInVertically(),
+                exit = slideOutVertically()
             ) {
                 FloatingActionButton(
                     shape = CircleShape,
@@ -115,7 +113,11 @@ fun LoginForm(modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = stringResource(Res.string.app_name), fontSize = 32.sp, color = MaterialTheme.colorScheme.onBackground)
+            Text(
+                text = stringResource(Res.string.app_name),
+                fontSize = 32.sp,
+                color = MaterialTheme.colorScheme.onBackground
+            )
             Spacer(modifier = Modifier.height(16.dp))
 
             TextField(
@@ -165,6 +167,7 @@ fun LoginForm(modifier: Modifier = Modifier) {
                                 ),
                                 initialVelocity = 0f
                             )
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             shakeAnim.snapTo(0f)
                         } else {
                             // Perform login
@@ -177,29 +180,48 @@ fun LoginForm(modifier: Modifier = Modifier) {
         }
 
         if (showSwitchServerDialog) {
-            Dialog(
-                onDismissRequest = { showSwitchServerDialog = false },
-                properties = DialogProperties(
-                    dismissOnBackPress = true,
-                    dismissOnClickOutside = true
-                )
-            ) {
-                Box(
-                    modifier = Modifier
-                        .padding(16.dp)
+            SwitchServerDialog {
+                showSwitchServerDialog = false
+            }
+        }
+    }
+}
 
-                ) {
-                    Column(
-                        modifier = Modifier.align(Alignment.Center),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text("Server Settings", fontSize = 24.sp)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = { /* Handle server switch */ }) {
-                            Text("Switch Server")
-                        }
-                    }
+@Composable
+fun SwitchServerDialog(onDismiss: () -> Unit) = Dialog(
+    onDismissRequest = { onDismiss() },
+    properties = DialogProperties(
+        dismissOnBackPress = true,
+        dismissOnClickOutside = true
+    )
+) {
+    var serverUrl by remember { mutableStateOf(config.serverUrl) }
+    Box(
+        modifier = Modifier
+            .padding(16.dp)
+
+    ) {
+        Column(
+            modifier = Modifier.align(Alignment.Center),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(stringResource(Res.string.server), fontSize = 24.sp)
+            Spacer(modifier = Modifier.height(16.dp))
+            TextField(
+                value = serverUrl,
+                onValueChange = {
+                    serverUrl = it
+                },
+                placeholder = {
+                    Text(text = stringResource(Res.string.server_address))
                 }
+            )
+            Button(onClick = {
+                config.serverUrl = serverUrl
+                saveConfig(config)
+                onDismiss()
+            }) {
+                Text(stringResource(Res.string.server_confirm))
             }
         }
     }
