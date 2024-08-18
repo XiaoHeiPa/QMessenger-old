@@ -72,6 +72,7 @@ fun LoginForm(modifier: Modifier = Modifier) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf(false) }
+    var serverUrl by remember { mutableStateOf(config.serverUrl) }
 
     var showSwitchServerDialog by remember { mutableStateOf(false) }
 
@@ -108,80 +109,100 @@ fun LoginForm(modifier: Modifier = Modifier) {
             }
         }
     ) { inn ->
-        Column(
-            modifier = Modifier.padding(30.dp).fillMaxSize().padding(inn),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(inn)
+                .padding(16.dp) // To add padding around the Box
         ) {
-            Text(
-                text = stringResource(Res.string.app_name),
-                fontSize = 32.sp,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+            Column(
+                modifier = Modifier.padding(30.dp).fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = stringResource(Res.string.app_name),
+                    fontSize = 32.sp,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.height(16.dp))
 
-            TextField(
-                value = username,
-                placeholder = {
-                    Text(stringResource(Res.string.username))
-                },
-                onValueChange = {
-                    username = it
-                },
-                modifier = Modifier.fillMaxWidth().padding(8.dp)
-            )
+                TextField(
+                    value = username,
+                    placeholder = {
+                        Text(stringResource(Res.string.username))
+                    },
+                    onValueChange = {
+                        username = it
+                    },
+                    modifier = Modifier.fillMaxWidth().padding(8.dp)
+                )
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            TextField(
-                value = password,
-                placeholder = {
-                    Text(stringResource(Res.string.password))
-                },
-                onValueChange = {
-                    password = it
-                    passwordError = password.length < 6
-                },
-                visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth().padding(8.dp)
-            )
-            if (passwordError) {
-                Text(text = stringResource(Res.string.password_length), color = Color.Red)
+                TextField(
+                    value = password,
+                    placeholder = {
+                        Text(stringResource(Res.string.password))
+                    },
+                    onValueChange = {
+                        password = it
+                        passwordError = password.length < 6
+                    },
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth().padding(8.dp)
+                )
+                if (passwordError) {
+                    Text(text = stringResource(Res.string.password_length), color = Color.Red)
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    modifier = Modifier.offset(x = shakeAnim.value.dp),
+                    onClick = {
+                        scope.launch {
+                            if (passwordError || username.isEmpty() || password.isEmpty()) {
+                                shakeAnim.animateTo(
+                                    targetValue = 10f,
+                                    animationSpec = repeatable(
+                                        iterations = 5,
+                                        animation = tween(
+                                            durationMillis = 100,
+                                            easing = LinearEasing
+                                        )
+                                    ),
+                                    initialVelocity = 0f
+                                )
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                shakeAnim.snapTo(0f)
+                            } else {
+                                // Perform login
+                                snackbarHostState.showSnackbar("OK")
+                            }
+                        }
+                    }) {
+                    Text(text = stringResource(Res.string.login))
+                }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                modifier = Modifier.offset(x = shakeAnim.value.dp),
-                onClick = {
-                    scope.launch {
-                        if (passwordError || username.isEmpty() || password.isEmpty()) {
-                            shakeAnim.animateTo(
-                                targetValue = 10f,
-                                animationSpec = repeatable(
-                                    iterations = 5,
-                                    animation = tween(
-                                        durationMillis = 100,
-                                        easing = LinearEasing
-                                    )
-                                ),
-                                initialVelocity = 0f
-                            )
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            shakeAnim.snapTo(0f)
-                        } else {
-                            // Perform login
-                            snackbarHostState.showSnackbar("OK")
-                        }
-                    }
-                }) {
-                Text(text = stringResource(Res.string.login))
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(16.dp) // Padding from the edges
+            ) {
+                Text(
+                    text = serverUrl,
+                    fontSize = 16.sp,
+                    color = Color.White
+                )
             }
         }
 
         if (showSwitchServerDialog) {
             SwitchServerDialog {
                 showSwitchServerDialog = false
+                serverUrl = config.serverUrl
             }
         }
     }
