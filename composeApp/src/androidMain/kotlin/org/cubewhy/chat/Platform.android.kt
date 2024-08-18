@@ -9,6 +9,3 @@ class AndroidPlatform : Platform {
 }
 
 actual fun getPlatform(): Platform = AndroidPlatform()
-
-@Composable
-actual fun isDarkEnabled(): Boolean = isSystemInDarkTheme()
