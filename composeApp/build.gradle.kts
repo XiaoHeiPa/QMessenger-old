@@ -12,6 +12,12 @@ plugins {
     kotlin("plugin.serialization") version "1.9.0"
 }
 
+repositories {
+    mavenCentral()
+    google()
+    maven("https://maven.pkg.jetbrains.space/kotlin/p/wasm/experimental")
+}
+
 kotlin {
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
@@ -47,8 +53,6 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.preference.ktx)
             implementation(libs.androidx.activity.compose)
-
-            implementation(libs.okhttp3.okhttp)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -63,12 +67,12 @@ kotlin {
 
             implementation(libs.androidx.navigation.compose)
             implementation(libs.kotlinx.serialization.json)
+
+            implementation(libs.bundles.ktor.common)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
-
-            implementation(libs.okhttp3.okhttp)
         }
     }
 }

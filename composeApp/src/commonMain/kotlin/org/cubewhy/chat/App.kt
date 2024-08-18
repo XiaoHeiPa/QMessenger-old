@@ -46,6 +46,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.request.post
+import io.ktor.client.statement.HttpResponse
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import kotlinx.coroutines.launch
 import org.cubewhy.chat.theme.QMessengerTheme
 import org.jetbrains.compose.resources.stringResource
@@ -69,6 +75,12 @@ fun App() {
 
 @Composable
 fun LoginForm(modifier: Modifier = Modifier) {
+//    val client = HttpClient(CIO) {
+//        install(JsonFeature) {
+//            serializer = KotlinxSerializer() // JSON serialization
+//        }
+//    }
+
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf(false) }
@@ -178,7 +190,9 @@ fun LoginForm(modifier: Modifier = Modifier) {
                                 shakeAnim.snapTo(0f)
                             } else {
                                 // Perform login
-                                snackbarHostState.showSnackbar("OK")
+//                                val response: HttpResponse = client.post("http://backend.lexap.top/api/user/login") {
+//                                    contentType(ContentType.Application.Json)
+//                                }
                             }
                         }
                     }) {
