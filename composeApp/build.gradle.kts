@@ -73,13 +73,10 @@ kotlin {
             implementation(libs.ktor.client.websockets)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.cloudy)
-
-            implementation(libs.uuid)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
-
             implementation(libs.io.ktor.ktor.client.okhttp)
         }
 

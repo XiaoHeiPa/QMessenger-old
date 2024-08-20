@@ -53,7 +53,6 @@ ktor-client-js = { module = "io.ktor:ktor-client-js", version.ref = "ktorClientC
 ktor-client-websockets = { module = "io.ktor:ktor-client-websockets", version.ref = "ktorClientCore" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktorClientCore" }
 logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor" }
-uuid = { module = "com.benasher44:uuid", version.ref = "uuid" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
