@@ -3,7 +3,12 @@
     <string name="app_name">老鼠聊天</string>
     <string name="username">用户名</string>
     <string name="password">密码</string>
-    <string name="password_length">密码长度必须大于等于6个字符</string>
+    <string name="encrypted_connection">加密的连接</string>
+    <string name="empty_username_or_password">账户名密码不可以为空</string>
+    <string name="internal_error">内部错误</string>
+    <string name="invite_code">邀请码 (可选)</string>
+    <string name="register_tip">没账户?点这里来注册!</string>
+    <string name="register">注册</string>
     <string name="login">登录</string>
     <string name="server">聊天服务设置</string>
     <string name="server_confirm">确认设置服务器</string>

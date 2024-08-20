@@ -15,7 +15,6 @@ plugins {
 repositories {
     mavenCentral()
     google()
-    maven("https://maven.pkg.jetbrains.space/kotlin/p/wasm/experimental")
 }
 
 kotlin {
@@ -53,6 +52,8 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.preference.ktx)
             implementation(libs.androidx.activity.compose)
+
+            implementation(libs.ktor.client.android)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -68,11 +69,20 @@ kotlin {
             implementation(libs.androidx.navigation.compose)
             implementation(libs.kotlinx.serialization.json)
 
-            implementation(libs.bundles.ktor.common)
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.cloudy)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
+
+            implementation(libs.ktor.client.apache5)
+        }
+
+        wasmJsMain.dependencies {
+            implementation(libs.ktor.client.js)
         }
     }
 }

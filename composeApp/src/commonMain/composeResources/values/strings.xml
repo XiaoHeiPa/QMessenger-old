@@ -3,7 +3,12 @@
     <string name="app_name">QMessenger</string>
     <string name="username">Username</string>
     <string name="password">Password</string>
-    <string name="password_length">Password must be at least 6 characters</string>
+    <string name="internal_error">Internal error</string>
+    <string name="empty_username_or_password">Empty username or password</string>
+    <string name="encrypted_connection">Encrypted connection</string>
+    <string name="invite_code">Invite code (Optional)</string>
+    <string name="register_tip">No account? Click here to register</string>
+    <string name="register">Register</string>
     <string name="login">Login</string>
     <string name="server">Chat Server</string>
     <string name="server_confirm">Confirm</string>
