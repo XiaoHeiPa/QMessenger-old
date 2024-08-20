@@ -58,6 +58,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.post
@@ -65,6 +68,7 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.util.date.getTimeMillis
 import kotlinx.coroutines.launch
 import org.cubewhy.chat.theme.QMessengerTheme
 import org.jetbrains.compose.resources.getString
@@ -89,24 +93,69 @@ import qmessenger.composeapp.generated.resources.server_confirm
 import qmessenger.composeapp.generated.resources.username
 
 val config = loadConfig()
-val client = getHttpClient {
-    install(ContentNegotiation) {
-        json()
-    }
+
+
+private fun checkLogin(): Boolean {
+    if (config.user == null) return false
+    if (config.user!!.expireAt < getTimeMillis()) return false
+    return true
 }
 
 @Composable
 @Preview
 fun App() {
     QMessengerTheme {
-        Scaffold {
-            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                LoginForm {
+        Scaffold { inn ->
+            val scope = rememberCoroutineScope()
 
+            var startDestination by remember { mutableStateOf(Screen.LOGIN_FORM) }
+            if (checkLogin()) {
+                startDestination = Screen.CHAT
+            } else if (config.user != null) {
+                // flash token
+                scope.launch {
+                    config.user?.let {
+                        QMessenger.login(config.user!!.username, decrypt(config.user!!.password))
+                            .let {
+                                if (it.isSuccess) {
+                                    it.getOrThrow().let { response ->
+                                        if (response.code == 200) {
+                                            config.user!!.token = response.data!!.token
+                                            saveConfig(config)
+                                            startDestination = Screen.CHAT
+                                        }
+                                    }
+                                }
+                            }
+                    }
+                }
+            }
+
+
+            val navController = rememberNavController()
+            Column(
+                Modifier.padding(inn).fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                NavHost(navController, startDestination = startDestination) {
+                    composable(route = Screen.LOGIN_FORM) {
+                        LoginForm {
+                            navController.navigate(Screen.CHAT)
+                        }
+                    }
+
+                    composable(route = Screen.CHAT) {
+                        ChatScreen(navController)
+                    }
                 }
             }
         }
     }
+}
+
+object Screen {
+    const val CHAT = "chat"
+    const val LOGIN_FORM = "login-form"
 }
 
 @Composable
@@ -342,19 +391,15 @@ fun LoginForm(modifier: Modifier = Modifier, onSuccess: (Authorize) -> Unit) {
                         } else {
                             // Perform login
                             hasError = false
-                            runCatching {
-                                val response: RestBean<Authorize> =
-                                    client.post("${config.api}/api/user/login?username=$username&password=$password")
-                                        .body()
-                                response
-                            }.let { result ->
+                            QMessenger.login(username, password).let { result ->
                                 if (result.isSuccess) {
                                     val response = result.getOrThrow()
                                     if (response.code == 200) {
                                         config.user = UserCache(
                                             username = username,
                                             password = encrypt(password),
-                                            token = response.data!!.token
+                                            token = response.data!!.token,
+                                            expireAt = response.data.expire
                                         )
                                         saveConfig(config)
                                         onSuccess(response.data)
