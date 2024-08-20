@@ -63,6 +63,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -93,6 +94,10 @@ val config = loadConfig()
 val client = getHttpClient {
     install(ContentNegotiation) {
         json()
+    }
+
+    install(WebSockets){
+        pingInterval = 20_000
     }
 }
 
