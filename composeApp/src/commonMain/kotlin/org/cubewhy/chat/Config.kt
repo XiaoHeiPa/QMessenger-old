@@ -25,7 +25,8 @@ data class AppConfig(
 data class UserCache(
     var username: String,
     var password: String,
-    var token: String
+    var token: String,
+    var expireAt: Long
 )
 // todo oauth
 
