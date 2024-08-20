@@ -9,6 +9,9 @@
     <string name="invite_code">邀请码 (可选)</string>
     <string name="register_tip">没账户?点这里来注册!</string>
     <string name="register">注册</string>
+    <string name="email">邮箱</string>
+    <string name="nickname">昵称</string>
+    <string name="bio">个人介绍</string>
     <string name="login">登录</string>
     <string name="server">聊天服务设置</string>
     <string name="server_confirm">确认设置服务器</string>

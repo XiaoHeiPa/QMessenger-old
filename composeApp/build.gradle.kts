@@ -10,6 +10,8 @@ plugins {
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
     kotlin("plugin.serialization") version "1.9.0"
+
+    id("com.google.gms.google-services")
 }
 
 repositories {
@@ -54,6 +56,10 @@ kotlin {
             implementation(libs.androidx.activity.compose)
 
             implementation(libs.ktor.client.android)
+
+            //noinspection UseTomlInstead
+            implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
+            implementation(libs.firebase.analytics)
         }
         commonMain.dependencies {
             implementation(compose.runtime)

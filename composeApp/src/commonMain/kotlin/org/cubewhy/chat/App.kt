@@ -72,11 +72,14 @@ import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import qmessenger.composeapp.generated.resources.Res
 import qmessenger.composeapp.generated.resources.app_name
+import qmessenger.composeapp.generated.resources.bio
+import qmessenger.composeapp.generated.resources.email
 import qmessenger.composeapp.generated.resources.empty_username_or_password
 import qmessenger.composeapp.generated.resources.encrypted_connection
 import qmessenger.composeapp.generated.resources.internal_error
 import qmessenger.composeapp.generated.resources.invite_code
 import qmessenger.composeapp.generated.resources.login
+import qmessenger.composeapp.generated.resources.nickname
 import qmessenger.composeapp.generated.resources.password
 import qmessenger.composeapp.generated.resources.register
 import qmessenger.composeapp.generated.resources.register_tip
@@ -131,7 +134,7 @@ fun RegisterDialog(
     Column(
         modifier = Modifier.padding(16.dp)
     ) {
-        Text("Register", fontSize = 24.sp, modifier = Modifier.padding(bottom = 16.dp))
+        Text(stringResource(Res.string.register), fontSize = 24.sp, modifier = Modifier.padding(bottom = 16.dp))
 
         TextField(
             value = username,
@@ -145,7 +148,7 @@ fun RegisterDialog(
         TextField(
             value = email,
             onValueChange = { email = it },
-            label = { Text("Email") },
+            label = { Text(stringResource(Res.string.email)) },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions.Default.copy(
                 imeAction = ImeAction.Next
@@ -178,7 +181,7 @@ fun RegisterDialog(
         TextField(
             value = nickname,
             onValueChange = { nickname = it },
-            label = { Text("Nickname") },
+            label = { Text(stringResource(Res.string.nickname)) },
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -187,7 +190,7 @@ fun RegisterDialog(
         TextField(
             value = bio,
             onValueChange = { bio = it },
-            label = { Text("Bio") },
+            label = { Text(stringResource(Res.string.bio)) },
             modifier = Modifier.fillMaxWidth()
                 .heightIn(min = 100.dp) // Set a minimum height for the bio field
         )

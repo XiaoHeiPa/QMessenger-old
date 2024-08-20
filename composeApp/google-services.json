@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "594350052878",
+    "project_id": "qbmessenger",
+    "storage_bucket": "qbmessenger.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:594350052878:android:36b66ac10975ab67b2ce5f",
+        "android_client_info": {
+          "package_name": "org.cubewhy.chat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCBnOV3flGfjLEbDT-IksD9rFi2D-xtjrM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
