@@ -90,11 +90,7 @@ import qmessenger.composeapp.generated.resources.server_confirm
 import qmessenger.composeapp.generated.resources.username
 
 val config = loadConfig()
-val client = getHttpClient {
-    install(ContentNegotiation) {
-        json()
-    }
-}
+
 
 private fun checkLogin(): Boolean {
     if (config.user == null) return false
