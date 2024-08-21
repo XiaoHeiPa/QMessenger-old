@@ -25,6 +25,7 @@ preferenceKtx = "1.2.1"
 androidx-navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 cloudy = { module = "com.github.skydoves:cloudy", version.ref = "cloudy" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
+firebase-messaging-ktx = { module = "com.google.firebase:firebase-messaging-ktx" }
 io-ktor-ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktorClientCore" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }

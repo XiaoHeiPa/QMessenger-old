@@ -59,6 +59,7 @@ kotlin {
             //noinspection UseTomlInstead
             implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
             implementation(libs.firebase.analytics)
+            implementation(libs.firebase.messaging.ktx)
         }
         commonMain.dependencies {
             implementation(compose.runtime)

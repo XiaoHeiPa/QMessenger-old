@@ -83,3 +83,8 @@ data class Account(
     val updatedTime: Long,
     val roles: List<String>
 )
+
+@Serializable
+data class UpdateFirebaseToken(
+    val token: String
+)
