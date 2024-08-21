@@ -35,10 +35,12 @@ enum class Permission(val type: Type) {
     MANAGE_ROLES(Type.CHANNEL_AND_SERVLET), // 管理身份组
     MANAGE_FILES(Type.CHANNEL_AND_SERVLET), // 管理用户上传的文件
     REGISTER_INVITE(Type.SERVLET), // 生成注册邀请
+
     // servlet admin & channel admin rights
     MANAGE_CHANNEL(Type.CHANNEL_AND_SERVLET), // 管理频道
     DISBAND_CHANNEL(Type.CHANNEL_AND_SERVLET), // 解散频道
     KICK_USERS(Type.CHANNEL_AND_SERVLET), // 频道内为踢出成员,服务器内为注销账户
+
     // channel admin rights
     PROCESS_JOIN_REQUEST(Type.CHANNEL), // 处理加频道请求
 
@@ -87,4 +89,45 @@ data class Account(
 @Serializable
 data class UpdateFirebaseToken(
     val token: String
+)
+
+@Serializable
+data class WebsocketResponse<T>(
+    val method: String,
+    val data: T?
+) {
+    companion object {
+        const val NEW_MESSAGE: String = "nmsg"
+    }
+}
+
+@Serializable
+data class Channel(
+    val id: Long,
+
+    val name: String,
+    val title: String?,
+    val description: String,
+
+    val iconHash: String,
+    val publicChannel: String,
+    val decentralized: String,
+
+    val createdAt: Long
+)
+
+@Serializable
+data class ChatMessage<T>(
+    val id: Long,
+    val channel: Long,
+    val sender: Long,
+    val contentType: String,
+    val shortContent: String,
+    val content: T,
+    val timestamp: Long,
+)
+
+@Serializable
+data class BaseMessage(
+    val data: String
 )
