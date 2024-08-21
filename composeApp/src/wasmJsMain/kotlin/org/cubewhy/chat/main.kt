@@ -11,9 +11,7 @@ import org.w3c.notifications.NotificationPermission
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
     if (Notification.permission != NotificationPermission.DENIED) {
-        Notification.requestPermission().then { result ->
-            Notification("Welcome", NotificationOptions(body = "Welcome to QMessenger!"))
-        }
+        Notification.requestPermission()
     }
 
     ComposeViewport(document.body!!) {
