@@ -21,30 +21,19 @@ import qmessenger.composeapp.generated.resources.logo
 
 fun main() = application {
     val trayState = rememberTrayState()
-    var isOpen by remember { mutableStateOf(true) }
+    val icon = painterResource(Res.drawable.logo)
 
-    if (isOpen) {
+    Tray(
+        state = trayState,
+        icon = icon,
+        tooltip = stringResource(Res.string.app_name)
+    )
 
-        Tray(
-            state = trayState,
-            icon = TrayIcon,
-            tooltip = stringResource(Res.string.app_name)
-        )
-
-        Window(
-            onCloseRequest = ::exitApplication,
-            icon = painterResource(Res.drawable.logo),
-            title = "QMessenger",
-        ) {
-            App()
-        }
-    }
-}
-
-object TrayIcon : Painter() {
-    override val intrinsicSize = Size(256f, 256f)
-
-    override fun DrawScope.onDraw() {
-        drawOval(Color(0xFFFFA500))
+    Window(
+        onCloseRequest = ::exitApplication,
+        icon = icon,
+        title = "QMessenger",
+    ) {
+        App()
     }
 }

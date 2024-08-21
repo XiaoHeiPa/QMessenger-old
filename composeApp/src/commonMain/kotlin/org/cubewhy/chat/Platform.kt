@@ -6,6 +6,13 @@ import io.ktor.client.HttpClientConfig
 
 interface Platform {
     val name: String
+    val type: PlatformType
+}
+
+enum class PlatformType {
+    DESKTOP,
+    ANDROID,
+    WEB
 }
 
 expect fun getPlatform(): Platform

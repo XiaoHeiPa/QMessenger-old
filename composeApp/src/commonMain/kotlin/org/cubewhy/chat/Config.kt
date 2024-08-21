@@ -32,11 +32,11 @@ data class UserCache(
 
 @OptIn(ExperimentalEncodingApi::class)
 fun decrypt(input: String): String =
-    Base64.encode(input.encodeToByteArray())
+    Base64.decode(input.encodeToByteArray()).decodeToString()
 
 @OptIn(ExperimentalEncodingApi::class)
 fun encrypt(input: String): String =
-    Base64.decode(input.encodeToByteArray()).decodeToString()
+    Base64.encode(input.encodeToByteArray())
 
 expect fun loadConfig(): AppConfig
 

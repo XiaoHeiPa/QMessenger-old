@@ -6,6 +6,7 @@ import io.ktor.client.engine.js.Js
 
 class WasmPlatform: Platform {
     override val name: String = "Web with Kotlin/Wasm"
+    override val type: PlatformType = PlatformType.WEB
 }
 
 actual fun getPlatform(): Platform = WasmPlatform()

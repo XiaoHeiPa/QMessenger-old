@@ -109,7 +109,7 @@ data class Channel(
     val title: String?,
     val description: String,
 
-    val iconHash: String,
+    val iconHash: String?,
     val publicChannel: String,
     val decentralized: String,
 

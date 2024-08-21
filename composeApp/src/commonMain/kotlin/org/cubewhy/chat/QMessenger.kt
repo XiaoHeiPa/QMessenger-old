@@ -3,6 +3,8 @@ package org.cubewhy.chat
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.websocket.webSocket
+import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.serialization.kotlinx.json.json
@@ -38,9 +40,11 @@ object QMessenger {
             for (message in incoming) {
                 when (message) {
                     is Frame.Text -> {
-                        val response: WebsocketResponse<JsonObject> = JSON.decodeFromString(message.readText())
+                        val response: WebsocketResponse<JsonObject> =
+                            JSON.decodeFromString(message.readText())
                         if (response.method == WebsocketResponse.NEW_MESSAGE) {
-                            val msg: ChatMessage<BaseMessage> = JSON.decodeFromJsonElement(response.data!!)
+                            val msg: ChatMessage<BaseMessage> =
+                                JSON.decodeFromJsonElement(response.data!!)
                             handleMessage(msg)
                         }
                     }
@@ -51,6 +55,16 @@ object QMessenger {
                 }
             }
         }
+    }
+
+    suspend fun channels(): Result<List<Channel>> = runCatching {
+        val response: RestBean<List<Channel>> = client.get("${config.api}/api/channel/list") {
+            header("Authorization", "Bearer ${config.user!!.token}")
+        }.body()
+        if (response.code != 200) {
+            throw IllegalStateException(response.message)
+        }
+        response.data!!
     }
 }
 

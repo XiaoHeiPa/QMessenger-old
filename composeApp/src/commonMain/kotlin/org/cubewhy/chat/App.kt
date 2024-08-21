@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
@@ -62,12 +63,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import io.ktor.client.call.body
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
-import io.ktor.serialization.kotlinx.json.json
 import io.ktor.util.date.getTimeMillis
 import kotlinx.coroutines.launch
 import org.cubewhy.chat.theme.QMessengerTheme
@@ -182,8 +181,13 @@ fun RegisterDialog(
 
     Column(
         modifier = Modifier.padding(16.dp)
+            .imePadding()
     ) {
-        Text(stringResource(Res.string.register), fontSize = 24.sp, modifier = Modifier.padding(bottom = 16.dp))
+        Text(
+            stringResource(Res.string.register),
+            fontSize = 24.sp,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
 
         TextField(
             value = username,
@@ -323,7 +327,8 @@ fun LoginForm(modifier: Modifier = Modifier, onSuccess: (Authorize) -> Unit) {
 
     val haptic = LocalHapticFeedback.current
 
-    Scaffold(modifier = Modifier.fillMaxSize(), snackbarHost = {
+    Scaffold(modifier = Modifier.fillMaxSize()
+        .imePadding(), snackbarHost = {
         SnackbarHost(hostState = snackBarHostState)
     }, floatingActionButton = {
         AnimatedVisibility(

@@ -12,6 +12,7 @@
     <string name="email">Email</string>
     <string name="nickname">Nickname</string>
     <string name="bio">Bio</string>
+    <string name="no_title">No Title</string>
     <string name="login">Login</string>
     <string name="server">Chat Server</string>
     <string name="server_confirm">Confirm</string>

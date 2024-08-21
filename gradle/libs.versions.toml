@@ -12,18 +12,21 @@ androidx-lifecycle = "2.8.0"
 androidx-material = "1.12.0"
 androidx-test-junit = "1.2.1"
 cloudy = "0.2.1"
+coilCompose = "3.0.0-alpha06"
 compose-plugin = "1.6.11"
 junit = "4.13.2"
 kotlin = "2.0.10"
 kotlinx-coroutines = "1.8.1"
 kotlinxSerializationJson = "1.7.1"
-ktorClientCore = "3.0.0-beta-2"
+ktorClientCore = "3.0.0-wasm2"
 navigationCompose = "2.7.0-alpha07"
 preferenceKtx = "1.2.1"
 
 [libraries]
 androidx-navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 cloudy = { module = "com.github.skydoves:cloudy", version.ref = "cloudy" }
+coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor", version.ref = "coilCompose" }
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilCompose" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-messaging-ktx = { module = "com.google.firebase:firebase-messaging-ktx" }
 io-ktor-ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktorClientCore" }
