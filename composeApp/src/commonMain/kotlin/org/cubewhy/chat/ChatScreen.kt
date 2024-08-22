@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,7 +25,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.HorizontalDivider
@@ -46,7 +47,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import coil3.ImageLoader
 import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
+import coil3.request.CachePolicy
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import qmessenger.composeapp.generated.resources.Res
@@ -60,6 +64,10 @@ fun ChatScreen(nav: NavController) {
     var fold by remember { mutableStateOf(false) }
     val isAndroid = getPlatform().type == PlatformType.ANDROID
     val scope = rememberCoroutineScope()
+    val imageLoader = ImageLoader.Builder(LocalPlatformContext.current)
+        .diskCachePolicy(CachePolicy.DISABLED)
+        .memoryCachePolicy(CachePolicy.ENABLED)
+        .build()
 
     if (channels.isEmpty()) {
         // 不知道为什么重载的时候这里会被多次执行
@@ -75,8 +83,9 @@ fun ChatScreen(nav: NavController) {
 
     Row(modifier = Modifier.fillMaxSize()) {
         if (!isAndroid || (isAndroid && currentChannel == null)) {
-            Column(modifier = Modifier.padding(5.dp)) {
+            Box(modifier = Modifier.padding(5.dp).fillMaxHeight()) {
                 IconButton(
+                    modifier = Modifier.align(Alignment.TopStart),
                     onClick = {
                         fold = !fold
                     }
@@ -86,7 +95,8 @@ fun ChatScreen(nav: NavController) {
                         contentDescription = "Menu"
                     )
                 }
-                LazyColumn {
+
+                LazyColumn(modifier = Modifier.align(Alignment.CenterStart)) {
                     items(
                         channels,
                         key = {
@@ -104,20 +114,31 @@ fun ChatScreen(nav: NavController) {
                                 modifier = Modifier.size(50.dp, 50.dp)
                                     .clip(CircleShape),
                                 model = "${config.api}/api/avatar/image/${channel.name}",
-                                contentDescription = "Avatar of channel ${channel.name}"
+                                contentDescription = "Avatar of channel ${channel.name}",
+                                imageLoader = imageLoader
                             )
                             if (!fold) {
                                 Column(modifier = Modifier.padding(5.dp)) {
                                     Text(
                                         color = if (isCurrent) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
                                         text = channel.title ?: channel.name
-
                                     )
                                 }
                             }
                         }
                         Spacer(modifier = Modifier.height(3.dp))
                     }
+                }
+                IconButton(
+                    modifier = Modifier.align(Alignment.BottomStart),
+                    onClick = {
+
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = "Add contact"
+                    )
                 }
             }
             VerticalDivider()
@@ -144,7 +165,10 @@ fun ChatScreen(nav: NavController) {
                                 modifier = Modifier.padding(vertical = 10.dp, horizontal = 5.dp),
                                 onClick = { currentChannel = null }
                             ) {
-                                Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Back"
+                                )
                             }
                             Column(modifier = Modifier.padding(10.dp)) {
                                 Text(
@@ -152,7 +176,10 @@ fun ChatScreen(nav: NavController) {
                                 )
                                 Text(
                                     color = Color.Gray,
-                                    text = stringResource(Res.string.member_count).replace("*count*", it.memberCount.toString())
+                                    text = stringResource(Res.string.member_count).replace(
+                                        "*count*",
+                                        it.memberCount.toString()
+                                    )
                                 )
                             }
                         }
