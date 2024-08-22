@@ -43,7 +43,9 @@ object QMessenger {
     suspend fun websocket(): WebSocketSession? {
         if (session == null) {
             session = runCatching {
-                client.webSocketSession(config.websocket)
+                client.webSocketSession(config.websocket) {
+                    header("Authorization", "Bearer ${config.user!!.token}")
+                }
             }.let {
                 if (it.isSuccess) it.getOrThrow()
                 else null
