@@ -148,7 +148,7 @@ fun App() {
                     }
 
                     composable(route = Screen.CHAT) {
-                        ChatScreen { channel, user ->
+                        ChatScreen(navController) { channel, user ->
                             viewModel.channel = channel
                             viewModel.user = user
                             navController.navigate(Screen.CONVERSATION)
@@ -160,6 +160,10 @@ fun App() {
                             navController.popBackStack()
                         }
                     }
+
+                    composable(route = Screen.ADD_CONTACT) {
+
+                    }
                 }
             }
         }
@@ -167,6 +171,7 @@ fun App() {
 }
 
 object Screen {
+    const val ADD_CONTACT = "add-contact"
     const val CHAT = "chat"
     const val CONVERSATION = "conv"
     const val LOGIN_FORM = "login-form"

@@ -58,6 +58,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import coil3.ImageLoader
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
@@ -78,7 +79,7 @@ import qmessenger.composeapp.generated.resources.no_title
 import qmessenger.composeapp.generated.resources.user_info
 
 @Composable
-fun ChatScreen(nav: (Channel, Account) -> Unit) {
+fun ChatScreen(nav: NavController, navToChat: (Channel, Account) -> Unit) {
     val channels = remember { mutableStateListOf<Channel>() }
     var currentChannel by remember { mutableStateOf<Channel?>(null) }
     var fold by remember { mutableStateOf(config.fold) }
@@ -109,7 +110,6 @@ fun ChatScreen(nav: (Channel, Account) -> Unit) {
                         onClick = {
                             fold = !fold
                             config.fold = fold
-                            saveConfig(config)
                         }
                     ) {
                         Icon(
@@ -201,8 +201,9 @@ fun ChatScreen(nav: (Channel, Account) -> Unit) {
         // current conversation
         if (isAndroid) {
             if (currentChannel != null) {
-                nav(currentChannel!!, user!!)
+                navToChat(currentChannel!!, user!!)
                 currentChannel = null
+                saveConfig(config)
             }
         } else {
             AnimatedVisibility(
