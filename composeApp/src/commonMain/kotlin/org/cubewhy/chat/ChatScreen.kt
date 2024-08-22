@@ -9,6 +9,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,6 +26,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
@@ -33,6 +35,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -45,6 +49,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil3.ImageLoader
@@ -59,7 +65,7 @@ import qmessenger.composeapp.generated.resources.no_title
 
 @Composable
 fun ChatScreen(nav: NavController) {
-    var channels = remember { mutableStateListOf<Channel>() }
+    val channels = remember { mutableStateListOf<Channel>() }
     var currentChannel by remember { mutableStateOf<Channel?>(null) }
     var fold by remember { mutableStateOf(false) }
     val isAndroid = getPlatform().type == PlatformType.ANDROID
@@ -158,41 +164,52 @@ fun ChatScreen(nav: NavController) {
             )
         ) {
             currentChannel?.let {
-                Column {
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        Row(modifier = Modifier.align(Alignment.TopStart)) {
-                            IconButton(
-                                modifier = Modifier.padding(vertical = 10.dp, horizontal = 5.dp),
-                                onClick = { currentChannel = null }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = "Back"
-                                )
-                            }
-                            Column(modifier = Modifier.padding(10.dp)) {
-                                Text(
-                                    text = it.title ?: stringResource(Res.string.no_title)
-                                )
-                                Text(
-                                    color = Color.Gray,
-                                    text = stringResource(Res.string.member_count).replace(
-                                        "*count*",
-                                        it.memberCount.toString()
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Column(modifier = Modifier.fillMaxSize().align(Alignment.Center)) {
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            Row(modifier = Modifier.align(Alignment.TopStart)) {
+                                IconButton(
+                                    modifier = Modifier.padding(
+                                        vertical = 10.dp,
+                                        horizontal = 5.dp
+                                    ),
+                                    onClick = { currentChannel = null }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = "Back"
                                     )
-                                )
+                                }
+                                Column(modifier = Modifier.padding(10.dp)) {
+                                    Text(
+                                        text = it.title ?: stringResource(Res.string.no_title)
+                                    )
+                                    Text(
+                                        color = Color.Gray,
+                                        text = stringResource(Res.string.member_count).replace(
+                                            "*count*",
+                                            it.memberCount.toString()
+                                        )
+                                    )
+                                }
+                            }
+                            Column(modifier = Modifier.align(Alignment.TopEnd).padding(10.dp)) {
+                                IconButton(onClick = {}) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Settings,
+                                        contentDescription = "Settings"
+                                    )
+                                }
                             }
                         }
-                        Column(modifier = Modifier.align(Alignment.TopEnd).padding(10.dp)) {
-                            IconButton(onClick = {}) {
-                                Icon(
-                                    imageVector = Icons.Filled.Settings,
-                                    contentDescription = "Settings"
-                                )
-                            }
-                        }
+                        HorizontalDivider()
+                        Conversation()
                     }
-                    HorizontalDivider()
+                    ChatBox(
+                        modifier = Modifier.align(Alignment.BottomStart).padding(10.dp),
+                        onMenuClicked = {},
+                        onSendMessageClicked = { }
+                    )
                 }
             }
         }
@@ -215,6 +232,76 @@ fun ChatScreen(nav: NavController) {
                     text = "Click a channel to start"
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun Conversation(modifier: Modifier = Modifier) {
+    Text("Hello World")
+}
+
+@Composable
+fun ChatBox(
+    modifier: Modifier = Modifier,
+    onMenuClicked: () -> Unit,
+    onSendMessageClicked: (String) -> Unit
+) {
+    var chatBoxValue by remember {
+        mutableStateOf(TextFieldValue(""))
+    }
+    var btnMethodIsSend by remember {
+        mutableStateOf(false)
+    }
+    Row(modifier = modifier) {
+        TextField(
+            value = chatBoxValue,
+            onValueChange = { newValue ->
+                chatBoxValue = newValue // update text
+                btnMethodIsSend = newValue.text.isNotEmpty()
+            },
+            modifier = Modifier
+                .weight(1f)
+                .padding(4.dp),
+            shape = RoundedCornerShape(24.dp),
+            colors = TextFieldDefaults.colors(
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent
+            ),
+            placeholder = {
+                Text(text = "Typing...")
+            }
+        )
+        IconButton(
+            onClick = {
+                val msg = chatBoxValue.text
+                if (msg.isBlank()) return@IconButton
+                if (btnMethodIsSend) {
+                    onSendMessageClicked(chatBoxValue.text)
+                } else {
+                    onMenuClicked()
+                }
+                chatBoxValue = TextFieldValue("") // clear text field
+            },
+            modifier = Modifier
+                .clip(CircleShape)
+                .background(color = MaterialTheme.colorScheme.onPrimary)
+                .align(Alignment.CenterVertically)
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onLongPress = {
+                            onMenuClicked()
+                        }
+                    )
+                }
+        ) {
+            Icon(
+                imageVector = if (btnMethodIsSend) Icons.AutoMirrored.Filled.Send else Icons.Filled.Add,
+                contentDescription = "Function btn",
+                modifier = Modifier
+                    .padding(8.dp)
+            )
         }
     }
 }
