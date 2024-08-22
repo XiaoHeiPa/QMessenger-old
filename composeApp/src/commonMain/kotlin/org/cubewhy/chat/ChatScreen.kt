@@ -5,6 +5,8 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
@@ -30,11 +32,13 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.VerticalDivider
@@ -50,8 +54,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil3.ImageLoader
 import coil3.compose.AsyncImage
@@ -61,8 +67,10 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import qmessenger.composeapp.generated.resources.Res
 import qmessenger.composeapp.generated.resources.channel_tip
+import qmessenger.composeapp.generated.resources.close
 import qmessenger.composeapp.generated.resources.member_count
 import qmessenger.composeapp.generated.resources.no_title
+import qmessenger.composeapp.generated.resources.user_info
 
 @Composable
 fun ChatScreen(nav: NavController) {
@@ -113,9 +121,16 @@ fun ChatScreen(nav: NavController) {
                             contentDescription = "Menu"
                         )
                     }
-                    if (!fold) {
+                    AnimatedVisibility(!fold) {
+                        var showUserInfo by remember { mutableStateOf(false) }
+                        AnimatedVisibility(visible = showUserInfo) {
+                            UserInfoDialog(
+                                userInfo = user!!,
+                                onDismiss = { showUserInfo = false }
+                            )
+                        }
                         IconButton(onClick = {
-
+                            showUserInfo = true
                         }) {
                             AsyncImage(
                                 modifier = Modifier.clip(CircleShape),
@@ -148,7 +163,7 @@ fun ChatScreen(nav: NavController) {
                                 contentDescription = "Avatar of channel ${channel.name}",
                                 imageLoader = imageLoader
                             )
-                            if (!fold) {
+                            AnimatedVisibility(!fold) {
                                 Column(modifier = Modifier.padding(5.dp)) {
                                     Text(
                                         color = if (isCurrent) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
@@ -162,7 +177,6 @@ fun ChatScreen(nav: NavController) {
                 }
                 Row(modifier = Modifier.align(Alignment.BottomStart)) {
                     IconButton(
-
                         onClick = {
 
                         }
@@ -172,7 +186,7 @@ fun ChatScreen(nav: NavController) {
                             contentDescription = "Add contact"
                         )
                     }
-                    if (!fold) {
+                    AnimatedVisibility(!fold) {
                         IconButton(
                             onClick = {
 
@@ -343,4 +357,50 @@ fun ChatBox(
             )
         }
     }
+}
+
+@Composable
+fun UserInfoDialog(
+    userInfo: Account,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(text = stringResource(Res.string.user_info))
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = "ID: ${userInfo.id}",
+                    style = TextStyle(fontSize = 16.sp),
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Text(
+                    text = "Nickname: ${userInfo.nickname}",
+                    style = TextStyle(fontSize = 16.sp),
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Text(
+                    text = "Username: ${userInfo.username}",
+                    style = TextStyle(fontSize = 16.sp),
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Text(
+                    text = "Bio: ${userInfo.bio}",
+                    style = TextStyle(fontSize = 16.sp),
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(Res.string.close))
+            }
+        }
+    )
 }
