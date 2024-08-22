@@ -127,8 +127,8 @@ data class Channel(
     val description: String,
 
     val iconHash: String?,
-    val publicChannel: String,
-    val decentralized: String,
+    val publicChannel: Boolean,
+    val decentralized: Boolean,
 
     val createdAt: Long,
     val memberCount: Long

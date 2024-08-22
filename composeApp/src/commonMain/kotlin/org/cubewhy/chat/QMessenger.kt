@@ -83,7 +83,7 @@ object QMessenger {
 
     suspend fun sendMessage(text: String, channel: Channel, user: Account) {
         val preview = text.split("\n")[0]
-        val message = ChatMessageDTO(channel.id, "${user.nickname}: $preview", MessageType.TEXT, BaseMessage(data = text))
+        val message = ChatMessageDTO(channel = channel.id, shortContent = "${user.nickname}: $preview", contentType = MessageType.TEXT, content = BaseMessage(data = text))
         this.websocket()?.send(
             JSON.encodeToString(
                 WebsocketRequest.serializer(ChatMessageDTO.serializer(BaseMessage.serializer())),
