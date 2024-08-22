@@ -25,6 +25,13 @@ val client = getHttpClient {
 object QMessenger {
     private var session: DefaultClientWebSocketSession? = null
 
+    suspend fun check() = runCatching {
+        val response: RestBean<CheckStatus> =
+            client.get("${config.api}/api/status/check")
+                .body()
+        response
+    }
+
     suspend fun login(username: String, password: String) = runCatching {
         val response: RestBean<Authorize> =
             client.post("${config.api}/api/user/login?username=$username&password=$password")
@@ -76,10 +83,10 @@ object QMessenger {
 
     suspend fun sendMessage(text: String, channel: Channel, user: Account) {
         val preview = text.split("\n")[0]
-        val message = ChatMessageDTO(channel.id, "${user.nickname}: $preview", MessageType.TEXT, text)
+        val message = ChatMessageDTO(channel.id, "${user.nickname}: $preview", MessageType.TEXT, BaseMessage(data = text))
         this.websocket()?.send(
             JSON.encodeToString(
-                WebsocketRequest.serializer(ChatMessageDTO.serializer(String.serializer())),
+                WebsocketRequest.serializer(ChatMessageDTO.serializer(BaseMessage.serializer())),
                 WebsocketRequest(WebsocketRequest.SEND_MESSAGE, message)
             )
         )

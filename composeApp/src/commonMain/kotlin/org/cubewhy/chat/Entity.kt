@@ -61,6 +61,12 @@ enum class Permission(val type: Type) {
 }
 
 @Serializable
+data class CheckStatus(
+    val timestamp: Long,
+    val impl: String
+)
+
+@Serializable
 data class RegisterInfo(
     val username: String,
     val password: String,

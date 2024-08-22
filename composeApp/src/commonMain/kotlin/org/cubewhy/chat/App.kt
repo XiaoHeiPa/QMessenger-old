@@ -150,7 +150,7 @@ fun App() {
                     composable(route = Screen.CHAT) {
                         ChatScreen { channel, user ->
                             viewModel.channel = channel
-                            viewModel.user = user!!
+                            viewModel.user = user
                             navController.navigate(Screen.CONVERSATION)
                         }
                     }

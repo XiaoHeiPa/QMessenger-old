@@ -48,6 +48,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -63,6 +64,7 @@ import coil3.compose.LocalPlatformContext
 import coil3.request.CachePolicy
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
@@ -70,6 +72,7 @@ import org.jetbrains.compose.resources.stringResource
 import qmessenger.composeapp.generated.resources.Res
 import qmessenger.composeapp.generated.resources.channel_tip
 import qmessenger.composeapp.generated.resources.close
+import qmessenger.composeapp.generated.resources.disconnected
 import qmessenger.composeapp.generated.resources.member_count
 import qmessenger.composeapp.generated.resources.no_title
 import qmessenger.composeapp.generated.resources.user_info
@@ -88,25 +91,14 @@ fun ChatScreen(nav: (Channel, Account) -> Unit) {
         .build()
 
     if (user == null) {
-        scope.launch {
-            QMessenger.user(config.user!!.token).let {
-                if (it.isSuccess) {
-                    user = it.getOrThrow()
-                }
-            }
+        loadUser(scope) {
+            user = it
         }
     }
 
     if (channels.isEmpty()) {
         // 不知道为什么重载的时候这里会被多次执行
-        scope.launch {
-            QMessenger.channels().let {
-                if (it.isSuccess) {
-                    channels.clear()
-                    channels.addAll(it.getOrThrow())
-                }
-            }
-        }
+        loadChannels(scope, channels)
     }
 
     Row(modifier = Modifier.fillMaxSize()) {
@@ -129,7 +121,7 @@ fun ChatScreen(nav: (Channel, Account) -> Unit) {
                         var showUserInfo by remember { mutableStateOf(false) }
                         AnimatedVisibility(visible = showUserInfo) {
                             UserInfoDialog(
-                                userInfo = user!!,
+                                userInfo = user,
                                 onDismiss = { showUserInfo = false }
                             )
                         }
@@ -227,8 +219,17 @@ fun ChatScreen(nav: (Channel, Account) -> Unit) {
                 )
             ) {
                 currentChannel?.let {
-                    MessageScreen(it, user!!) {
-                        currentChannel = null
+                    if (user == null) {
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            Text(
+                                modifier = Modifier.align(Alignment.Center),
+                                text = stringResource(Res.string.disconnected).replace("*server*", config.serverUrl)
+                            )
+                        }
+                    } else {
+                        MessageScreen(it, user!!) {
+                            currentChannel = null
+                        }
                     }
                 }
             }
@@ -251,6 +252,33 @@ fun ChatScreen(nav: (Channel, Account) -> Unit) {
                     modifier = Modifier.align(Alignment.Center),
                     text = stringResource(Res.string.channel_tip)
                 )
+            }
+        }
+    }
+}
+
+private fun loadUser(
+    scope: CoroutineScope,
+    ok: (Account) -> Unit
+) {
+    scope.launch {
+        QMessenger.user(config.user!!.token).let {
+            if (it.isSuccess) {
+                ok(it.getOrThrow())
+            }
+        }
+    }
+}
+
+private fun loadChannels(
+    scope: CoroutineScope,
+    channels: SnapshotStateList<Channel>
+) {
+    scope.launch {
+        QMessenger.channels().let {
+            if (it.isSuccess) {
+                channels.clear()
+                channels.addAll(it.getOrThrow())
             }
         }
     }
@@ -312,6 +340,7 @@ fun MessageScreen(channel: Channel, user: Account, onDismiss: () -> Unit) {
                         )
                     }
                 }
+
                 Column(modifier = Modifier.align(Alignment.TopEnd).padding(10.dp)) {
                     IconButton(onClick = {}) {
                         Icon(
@@ -408,7 +437,7 @@ fun ChatBox(
 
 @Composable
 fun UserInfoDialog(
-    userInfo: Account,
+    userInfo: Account?,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
@@ -422,26 +451,30 @@ fun UserInfoDialog(
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
-                Text(
-                    text = "ID: ${userInfo.id}",
-                    style = TextStyle(fontSize = 16.sp),
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                Text(
-                    text = "Nickname: ${userInfo.nickname}",
-                    style = TextStyle(fontSize = 16.sp),
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                Text(
-                    text = "Username: ${userInfo.username}",
-                    style = TextStyle(fontSize = 16.sp),
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                Text(
-                    text = "Bio: ${userInfo.bio}",
-                    style = TextStyle(fontSize = 16.sp),
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
+                if (userInfo == null) {
+                    Text(stringResource(Res.string.disconnected).replace("*server*", config.serverUrl))
+                } else {
+                    Text(
+                        text = "ID: ${userInfo.id}",
+                        style = TextStyle(fontSize = 16.sp),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    Text(
+                        text = "Nickname: ${userInfo.nickname}",
+                        style = TextStyle(fontSize = 16.sp),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    Text(
+                        text = "Username: ${userInfo.username}",
+                        style = TextStyle(fontSize = 16.sp),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    Text(
+                        text = "Bio: ${userInfo.bio}",
+                        style = TextStyle(fontSize = 16.sp),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
             }
         },
         confirmButton = {
