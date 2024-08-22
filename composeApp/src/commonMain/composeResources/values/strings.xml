@@ -18,4 +18,5 @@
     <string name="server_confirm">Confirm</string>
     <string name="server_address">Address</string>
     <string name="member_count">*count* members</string>
+    <string name="channel_tip">Click on a channel to start, or create a channel</string>
 </resources>

@@ -66,6 +66,16 @@ object QMessenger {
         }
         response.data!!
     }
+
+    suspend fun user(token: String): Result<Account> = runCatching {
+        val response: RestBean<Account> = client.get("${config.api}/api/user/whoami") {
+            header("Authorization", "Bearer ${config.user!!.token}")
+        }.body()
+        if (response.code != 200) {
+            throw IllegalStateException(response.message)
+        }
+        response.data!!
+    }
 }
 
 expect fun pushNotification(title: String, body: String): Unit

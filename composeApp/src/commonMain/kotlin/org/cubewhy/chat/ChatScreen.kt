@@ -60,6 +60,7 @@ import coil3.request.CachePolicy
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import qmessenger.composeapp.generated.resources.Res
+import qmessenger.composeapp.generated.resources.channel_tip
 import qmessenger.composeapp.generated.resources.member_count
 import qmessenger.composeapp.generated.resources.no_title
 
@@ -70,10 +71,21 @@ fun ChatScreen(nav: NavController) {
     var fold by remember { mutableStateOf(false) }
     val isAndroid = getPlatform().type == PlatformType.ANDROID
     val scope = rememberCoroutineScope()
+    var user by remember { mutableStateOf<Account?>(null) }
     val imageLoader = ImageLoader.Builder(LocalPlatformContext.current)
         .diskCachePolicy(CachePolicy.DISABLED)
         .memoryCachePolicy(CachePolicy.ENABLED)
         .build()
+
+    if (user == null) {
+        scope.launch {
+            QMessenger.user(config.user!!.token).let {
+                if (it.isSuccess) {
+                    user = it.getOrThrow()
+                }
+            }
+        }
+    }
 
     if (channels.isEmpty()) {
         // 不知道为什么重载的时候这里会被多次执行
@@ -90,16 +102,29 @@ fun ChatScreen(nav: NavController) {
     Row(modifier = Modifier.fillMaxSize()) {
         if (!isAndroid || (isAndroid && currentChannel == null)) {
             Box(modifier = Modifier.padding(5.dp).fillMaxHeight()) {
-                IconButton(
-                    modifier = Modifier.align(Alignment.TopStart),
-                    onClick = {
-                        fold = !fold
+                Row(modifier = Modifier.align(Alignment.TopStart)) {
+                    IconButton(
+                        onClick = {
+                            fold = !fold
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Menu,
+                            contentDescription = "Menu"
+                        )
                     }
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Menu,
-                        contentDescription = "Menu"
-                    )
+                    if (!fold) {
+                        IconButton(onClick = {
+
+                        }) {
+                            AsyncImage(
+                                modifier = Modifier.clip(CircleShape),
+                                model = "${config.api}/api/avatar/image/${user?.username}",
+                                contentDescription = "Avatar of channel ${user?.username}",
+                                imageLoader = imageLoader
+                            )
+                        }
+                    }
                 }
 
                 LazyColumn(modifier = Modifier.align(Alignment.CenterStart)) {
@@ -135,16 +160,30 @@ fun ChatScreen(nav: NavController) {
                         Spacer(modifier = Modifier.height(3.dp))
                     }
                 }
-                IconButton(
-                    modifier = Modifier.align(Alignment.BottomStart),
-                    onClick = {
+                Row(modifier = Modifier.align(Alignment.BottomStart)) {
+                    IconButton(
 
+                        onClick = {
+
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Add,
+                            contentDescription = "Add contact"
+                        )
                     }
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Add,
-                        contentDescription = "Add contact"
-                    )
+                    if (!fold) {
+                        IconButton(
+                            onClick = {
+
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Settings,
+                                contentDescription = "Settings"
+                            )
+                        }
+                    }
                 }
             }
             VerticalDivider()
@@ -229,7 +268,7 @@ fun ChatScreen(nav: NavController) {
             Box(modifier = Modifier.fillMaxSize()) {
                 Text(
                     modifier = Modifier.align(Alignment.Center),
-                    text = "Click a channel to start"
+                    text = stringResource(Res.string.channel_tip)
                 )
             }
         }
