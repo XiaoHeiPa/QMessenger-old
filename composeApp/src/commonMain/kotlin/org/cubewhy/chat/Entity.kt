@@ -102,6 +102,17 @@ data class WebsocketResponse<T>(
 }
 
 @Serializable
+data class WebsocketRequest<T>(
+    val method: String,
+    val data: T?
+) {
+
+    companion object {
+        const val SEND_MESSAGE: String = "smsg"
+    }
+}
+
+@Serializable
 data class Channel(
     val id: Long,
 
@@ -120,13 +131,25 @@ data class Channel(
 @Serializable
 data class ChatMessage<T>(
     val id: Long,
-    val channel: Long,
+    val channel: Channel,
     val sender: Long,
     val contentType: String,
     val shortContent: String,
     val content: T,
     val timestamp: Long,
 )
+
+@Serializable
+data class ChatMessageDTO<T>(
+    val channel: Long,
+    val shortContent: String,
+    val contentType: String,
+    val content: T
+)
+
+object MessageType {
+    const val TEXT = "t"
+}
 
 @Serializable
 data class BaseMessage(

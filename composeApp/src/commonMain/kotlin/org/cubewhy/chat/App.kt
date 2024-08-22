@@ -148,14 +148,15 @@ fun App() {
                     }
 
                     composable(route = Screen.CHAT) {
-                        ChatScreen {
-                            viewModel.channel = it
+                        ChatScreen { channel, user ->
+                            viewModel.channel = channel
+                            viewModel.user = user!!
                             navController.navigate(Screen.CONVERSATION)
                         }
                     }
 
                     composable(route = Screen.CONVERSATION) {
-                        MessageScreen(viewModel.channel) {
+                        MessageScreen(viewModel.channel, viewModel.user) {
                             navController.popBackStack()
                         }
                     }
@@ -173,6 +174,7 @@ object Screen {
 
 class ChannelViewModel: ViewModel() {
     lateinit var channel: Channel
+    lateinit var user: Account
 }
 
 @Composable

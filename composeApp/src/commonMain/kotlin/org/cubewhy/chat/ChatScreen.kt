@@ -41,6 +41,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -56,12 +57,15 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import coil3.ImageLoader
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.CachePolicy
+import io.ktor.websocket.Frame
+import io.ktor.websocket.readText
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.decodeFromJsonElement
 import org.jetbrains.compose.resources.stringResource
 import qmessenger.composeapp.generated.resources.Res
 import qmessenger.composeapp.generated.resources.channel_tip
@@ -71,7 +75,7 @@ import qmessenger.composeapp.generated.resources.no_title
 import qmessenger.composeapp.generated.resources.user_info
 
 @Composable
-fun ChatScreen(nav: (Channel) -> Unit) {
+fun ChatScreen(nav: (Channel, Account) -> Unit) {
     val channels = remember { mutableStateListOf<Channel>() }
     var currentChannel by remember { mutableStateOf<Channel?>(null) }
     var fold by remember { mutableStateOf(config.fold) }
@@ -205,7 +209,7 @@ fun ChatScreen(nav: (Channel) -> Unit) {
         // current conversation
         if (isAndroid) {
             if (currentChannel != null) {
-                nav(currentChannel!!)
+                nav(currentChannel!!, user!!)
                 currentChannel = null
             }
         } else {
@@ -223,7 +227,7 @@ fun ChatScreen(nav: (Channel) -> Unit) {
                 )
             ) {
                 currentChannel?.let {
-                    MessageScreen(it) {
+                    MessageScreen(it, user!!) {
                         currentChannel = null
                     }
                 }
@@ -253,7 +257,32 @@ fun ChatScreen(nav: (Channel) -> Unit) {
 }
 
 @Composable
-fun MessageScreen(channel: Channel, onDismiss: () -> Unit) {
+fun MessageScreen(channel: Channel, user: Account, onDismiss: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(Unit) {
+        QMessenger.websocket()?.apply {
+            for (wsMessage in incoming) {
+                when (wsMessage) {
+                    is Frame.Text -> {
+                        val response: WebsocketResponse<JsonObject> =
+                            JSON.decodeFromString(wsMessage.readText())
+                        if (response.method == WebsocketResponse.NEW_MESSAGE) {
+                            val msg: ChatMessage<BaseMessage> =
+                                JSON.decodeFromJsonElement(response.data!!)
+                            pushNotification(
+                                msg.channel.title ?: msg.channel.name,
+                                msg.shortContent
+                            )
+                        }
+                    }
+
+                    else -> {
+                        // unknown type
+                    }
+                }
+            }
+        }
+    }
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().align(Alignment.Center)) {
             Box(modifier = Modifier.fillMaxWidth()) {
@@ -298,7 +327,11 @@ fun MessageScreen(channel: Channel, onDismiss: () -> Unit) {
         ChatBox(
             modifier = Modifier.align(Alignment.BottomStart).padding(10.dp),
             onMenuClicked = {},
-            onSendMessageClicked = { }
+            onSendMessageClicked = {
+                scope.launch {
+                    QMessenger.sendMessage(it, channel, user)
+                }
+            }
         )
     }
 }
