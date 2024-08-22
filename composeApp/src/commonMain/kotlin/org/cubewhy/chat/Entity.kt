@@ -113,7 +113,8 @@ data class Channel(
     val publicChannel: String,
     val decentralized: String,
 
-    val createdAt: Long
+    val createdAt: Long,
+    val memberCount: Long
 )
 
 @Serializable

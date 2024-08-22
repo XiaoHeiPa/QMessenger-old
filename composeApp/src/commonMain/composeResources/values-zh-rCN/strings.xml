@@ -17,4 +17,5 @@
     <string name="server">聊天服务设置</string>
     <string name="server_confirm">确认设置服务器</string>
     <string name="server_address">聊天服务地址</string>
+    <string name="member_count">*count* 个成员</string>
 </resources>

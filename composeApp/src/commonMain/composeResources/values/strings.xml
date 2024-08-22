@@ -17,4 +17,5 @@
     <string name="server">Chat Server</string>
     <string name="server_confirm">Confirm</string>
     <string name="server_address">Address</string>
+    <string name="member_count">*count* members</string>
 </resources>

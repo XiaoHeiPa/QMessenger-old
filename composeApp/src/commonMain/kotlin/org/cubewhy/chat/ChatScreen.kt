@@ -23,6 +23,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.HorizontalDivider
@@ -48,6 +50,7 @@ import coil3.compose.AsyncImage
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import qmessenger.composeapp.generated.resources.Res
+import qmessenger.composeapp.generated.resources.member_count
 import qmessenger.composeapp.generated.resources.no_title
 
 @Composable
@@ -107,7 +110,8 @@ fun ChatScreen(nav: NavController) {
                                 Column(modifier = Modifier.padding(5.dp)) {
                                     Text(
                                         color = if (isCurrent) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
-                                        text = channel.name
+                                        text = channel.title ?: channel.name
+
                                     )
                                 }
                             }
@@ -121,21 +125,38 @@ fun ChatScreen(nav: NavController) {
         // current conversation
         AnimatedVisibility(
             visible = currentChannel != null,
-            enter = slideInVertically(initialOffsetY = { it }) + fadeIn(animationSpec = tween(durationMillis = 300)),
-            exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(animationSpec = tween(durationMillis = 300))
+            enter = slideInVertically(initialOffsetY = { it }) + fadeIn(
+                animationSpec = tween(
+                    durationMillis = 300
+                )
+            ),
+            exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(
+                animationSpec = tween(
+                    durationMillis = 300
+                )
+            )
         ) {
             currentChannel?.let {
                 Column {
                     Box(modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.align(Alignment.TopStart)) {
-                            // title
-                            Text(text = it.title ?: stringResource(Res.string.no_title))
-                            Text(
-                                color = Color.Gray,
-                                text = it.description
-                            )
+                        Row(modifier = Modifier.align(Alignment.TopStart)) {
+                            IconButton(
+                                modifier = Modifier.padding(vertical = 10.dp, horizontal = 5.dp),
+                                onClick = { currentChannel = null }
+                            ) {
+                                Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                            }
+                            Column(modifier = Modifier.padding(10.dp)) {
+                                Text(
+                                    text = it.title ?: stringResource(Res.string.no_title)
+                                )
+                                Text(
+                                    color = Color.Gray,
+                                    text = stringResource(Res.string.member_count).replace("*count*", it.memberCount.toString())
+                                )
+                            }
                         }
-                        Column(modifier = Modifier.align(Alignment.TopEnd)) {
+                        Column(modifier = Modifier.align(Alignment.TopEnd).padding(10.dp)) {
                             IconButton(onClick = {}) {
                                 Icon(
                                     imageVector = Icons.Filled.Settings,
@@ -147,13 +168,25 @@ fun ChatScreen(nav: NavController) {
                     HorizontalDivider()
                 }
             }
-            if (currentChannel == null) {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    Text(
-                        modifier = Modifier.align(Alignment.Center),
-                        text = "Click a channel to start"
-                    )
-                }
+        }
+        AnimatedVisibility(
+            visible = currentChannel == null,
+            enter = slideInVertically(initialOffsetY = { it }) + fadeIn(
+                animationSpec = tween(
+                    durationMillis = 300
+                )
+            ),
+            exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(
+                animationSpec = tween(
+                    durationMillis = 300
+                )
+            )
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                Text(
+                    modifier = Modifier.align(Alignment.Center),
+                    text = "Click a channel to start"
+                )
             }
         }
     }
