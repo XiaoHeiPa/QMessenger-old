@@ -108,7 +108,7 @@ fun App() {
     QMessengerTheme {
         Scaffold { inn ->
             val scope = rememberCoroutineScope()
-            val viewModel: ChannelViewModel = viewModel()
+            val viewModel: ChannelViewModel = viewModel { ChannelViewModel() }
 
             var startDestination by remember { mutableStateOf(Screen.LOGIN_FORM) }
             if (checkLogin()) {
@@ -172,7 +172,7 @@ object Screen {
     const val LOGIN_FORM = "login-form"
 }
 
-class ChannelViewModel: ViewModel() {
+class ChannelViewModel : ViewModel() {
     lateinit var channel: Channel
     lateinit var user: Account
 }

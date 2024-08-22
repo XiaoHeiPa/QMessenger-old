@@ -19,7 +19,7 @@ data class AppConfig(
         get() =
             (if (encryptedConnection) "https://" else "http://") + serverUrl
     val websocket: String
-        get() = (if (encryptedConnection) "wss//" else "ws://") + serverUrl + "/websocket"
+        get() = (if (encryptedConnection) "wss://" else "ws://") + serverUrl + "/websocket"
 }
 
 @Serializable
