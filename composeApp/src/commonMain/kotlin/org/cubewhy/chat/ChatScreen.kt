@@ -5,8 +5,6 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
@@ -73,10 +71,10 @@ import qmessenger.composeapp.generated.resources.no_title
 import qmessenger.composeapp.generated.resources.user_info
 
 @Composable
-fun ChatScreen(nav: NavController) {
+fun ChatScreen(nav: (Channel) -> Unit) {
     val channels = remember { mutableStateListOf<Channel>() }
     var currentChannel by remember { mutableStateOf<Channel?>(null) }
-    var fold by remember { mutableStateOf(false) }
+    var fold by remember { mutableStateOf(config.fold) }
     val isAndroid = getPlatform().type == PlatformType.ANDROID
     val scope = rememberCoroutineScope()
     var user by remember { mutableStateOf<Account?>(null) }
@@ -114,6 +112,8 @@ fun ChatScreen(nav: NavController) {
                     IconButton(
                         onClick = {
                             fold = !fold
+                            config.fold = fold
+                            saveConfig(config)
                         }
                     ) {
                         Icon(
@@ -203,66 +203,29 @@ fun ChatScreen(nav: NavController) {
             VerticalDivider()
         }
         // current conversation
-        AnimatedVisibility(
-            visible = currentChannel != null,
-            enter = slideInVertically(initialOffsetY = { it }) + fadeIn(
-                animationSpec = tween(
-                    durationMillis = 300
-                )
-            ),
-            exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(
-                animationSpec = tween(
-                    durationMillis = 300
-                )
-            )
-        ) {
-            currentChannel?.let {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    Column(modifier = Modifier.fillMaxSize().align(Alignment.Center)) {
-                        Box(modifier = Modifier.fillMaxWidth()) {
-                            Row(modifier = Modifier.align(Alignment.TopStart)) {
-                                IconButton(
-                                    modifier = Modifier.padding(
-                                        vertical = 10.dp,
-                                        horizontal = 5.dp
-                                    ),
-                                    onClick = { currentChannel = null }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                        contentDescription = "Back"
-                                    )
-                                }
-                                Column(modifier = Modifier.padding(10.dp)) {
-                                    Text(
-                                        text = it.title ?: stringResource(Res.string.no_title)
-                                    )
-                                    Text(
-                                        color = Color.Gray,
-                                        text = stringResource(Res.string.member_count).replace(
-                                            "*count*",
-                                            it.memberCount.toString()
-                                        )
-                                    )
-                                }
-                            }
-                            Column(modifier = Modifier.align(Alignment.TopEnd).padding(10.dp)) {
-                                IconButton(onClick = {}) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Settings,
-                                        contentDescription = "Settings"
-                                    )
-                                }
-                            }
-                        }
-                        HorizontalDivider()
-                        Conversation()
-                    }
-                    ChatBox(
-                        modifier = Modifier.align(Alignment.BottomStart).padding(10.dp),
-                        onMenuClicked = {},
-                        onSendMessageClicked = { }
+        if (isAndroid) {
+            if (currentChannel != null) {
+                nav(currentChannel!!)
+                currentChannel = null
+            }
+        } else {
+            AnimatedVisibility(
+                visible = currentChannel != null,
+                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(
+                    animationSpec = tween(
+                        durationMillis = 300
                     )
+                ),
+                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(
+                    animationSpec = tween(
+                        durationMillis = 300
+                    )
+                )
+            ) {
+                currentChannel?.let {
+                    MessageScreen(it) {
+                        currentChannel = null
+                    }
                 }
             }
         }
@@ -286,6 +249,57 @@ fun ChatScreen(nav: NavController) {
                 )
             }
         }
+    }
+}
+
+@Composable
+fun MessageScreen(channel: Channel, onDismiss: () -> Unit) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().align(Alignment.Center)) {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Row(modifier = Modifier.align(Alignment.TopStart)) {
+                    IconButton(
+                        modifier = Modifier.padding(
+                            vertical = 10.dp,
+                            horizontal = 5.dp
+                        ),
+                        onClick = { onDismiss() }
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                    Column(modifier = Modifier.padding(10.dp)) {
+                        Text(
+                            text = channel.title ?: stringResource(Res.string.no_title)
+                        )
+                        Text(
+                            color = Color.Gray,
+                            text = stringResource(Res.string.member_count).replace(
+                                "*count*",
+                                channel.memberCount.toString()
+                            )
+                        )
+                    }
+                }
+                Column(modifier = Modifier.align(Alignment.TopEnd).padding(10.dp)) {
+                    IconButton(onClick = {}) {
+                        Icon(
+                            imageVector = Icons.Filled.Settings,
+                            contentDescription = "Settings"
+                        )
+                    }
+                }
+            }
+            HorizontalDivider()
+            Conversation()
+        }
+        ChatBox(
+            modifier = Modifier.align(Alignment.BottomStart).padding(10.dp),
+            onMenuClicked = {},
+            onSendMessageClicked = { }
+        )
     }
 }
 

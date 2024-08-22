@@ -59,6 +59,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -106,6 +108,7 @@ fun App() {
     QMessengerTheme {
         Scaffold { inn ->
             val scope = rememberCoroutineScope()
+            val viewModel: ChannelViewModel = viewModel()
 
             var startDestination by remember { mutableStateOf(Screen.LOGIN_FORM) }
             if (checkLogin()) {
@@ -140,11 +143,21 @@ fun App() {
                     composable(route = Screen.LOGIN_FORM) {
                         LoginForm {
                             navController.navigate(Screen.CHAT)
+                            navController.clearBackStack(Screen.CHAT)
                         }
                     }
 
                     composable(route = Screen.CHAT) {
-                        ChatScreen(navController)
+                        ChatScreen {
+                            viewModel.channel = it
+                            navController.navigate(Screen.CONVERSATION)
+                        }
+                    }
+
+                    composable(route = Screen.CONVERSATION) {
+                        MessageScreen(viewModel.channel) {
+                            navController.popBackStack()
+                        }
                     }
                 }
             }
@@ -154,7 +167,12 @@ fun App() {
 
 object Screen {
     const val CHAT = "chat"
+    const val CONVERSATION = "conv"
     const val LOGIN_FORM = "login-form"
+}
+
+class ChannelViewModel: ViewModel() {
+    lateinit var channel: Channel
 }
 
 @Composable

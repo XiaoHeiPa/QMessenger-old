@@ -11,6 +11,7 @@ val JSON = Json { ignoreUnknownKeys = true }
 data class AppConfig(
     var serverUrl: String = "chat-api.lunarclient.top",
     var encryptedConnection: Boolean = true,
+    var fold: Boolean = true, // fold conversations
 
     var user: UserCache? = null
 ) {
