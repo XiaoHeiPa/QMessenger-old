@@ -3,6 +3,7 @@ package org.cubewhy.chat
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
+import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.webSocketSession
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -17,6 +18,8 @@ val client = getHttpClient {
     install(ContentNegotiation) {
         json()
     }
+
+    install(WebSockets)
 }
 
 object QMessenger {
@@ -72,7 +75,7 @@ object QMessenger {
     suspend fun sendMessage(text: String, channel: Channel, user: Account) {
         val preview = text.split("\n")[0]
         val message = ChatMessageDTO(channel.id, "${user.nickname}: $preview", MessageType.TEXT, text)
-        this.websocket()!!.send(
+        this.websocket()?.send(
             JSON.encodeToString(
                 WebsocketRequest.serializer(ChatMessageDTO.serializer(String.serializer())),
                 WebsocketRequest(WebsocketRequest.SEND_MESSAGE, message)
