@@ -43,6 +43,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -65,6 +66,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil3.ImageLoader
 import coil3.compose.AsyncImage
@@ -73,6 +76,11 @@ import coil3.request.CachePolicy
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
@@ -84,6 +92,7 @@ import qmessenger.composeapp.generated.resources.disconnected
 import qmessenger.composeapp.generated.resources.member_count
 import qmessenger.composeapp.generated.resources.no_title
 import qmessenger.composeapp.generated.resources.user_info
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun ChatScreen(nav: NavController, navToChat: (Channel, Account) -> Unit) {
@@ -288,6 +297,8 @@ private fun loadUser(
         QMessenger.user().let {
             if (it.isSuccess) {
                 ok(it.getOrThrow())
+            } else {
+                it.exceptionOrNull()?.let { it1 -> println(it1) }
             }
         }
     }
@@ -301,18 +312,31 @@ private fun loadChannels(
             if (it.isSuccess) {
                 channels.clear()
                 channels.addAll(it.getOrThrow())
+            } else {
+                it.exceptionOrNull()?.let { it1 -> println(it1) }
             }
         }
+    }
+}
+
+class MessageViewModel : ViewModel() {
+    private val _messages = mutableStateListOf<ChatMessage<*>>()
+    val messages: SnapshotStateList<ChatMessage<*>> get() = _messages
+
+    fun addMessage(msg: ChatMessage<*>) {
+        _messages.add(msg)
     }
 }
 
 @Composable
 fun MessageScreen(channel: Channel, user: Account, onDismiss: () -> Unit) {
     val scope = rememberCoroutineScope()
+    val model = viewModel { MessageViewModel() }
+
     LaunchedEffect(Unit) {
-        QMessenger.websocket()?.apply {
+        QMessenger.websocket()?.let {
             runCatching {
-                for (wsMessage in incoming) {
+                for (wsMessage in it.incoming) {
                     when (wsMessage) {
                         is Frame.Text -> {
                             val response: WebsocketResponse<JsonObject> =
@@ -324,6 +348,9 @@ fun MessageScreen(channel: Channel, user: Account, onDismiss: () -> Unit) {
                                     pushNotification(
                                         msg.channel.title ?: msg.channel.name, msg.shortContent
                                     )
+                                }
+                                if (channel.id == msg.channel.id) {
+                                    model.addMessage(msg)
                                 }
                             }
                         }
@@ -370,21 +397,25 @@ fun MessageScreen(channel: Channel, user: Account, onDismiss: () -> Unit) {
                 }
             }
             HorizontalDivider()
-            Conversation(user = user, channel = channel)
+            Conversation(user = user, channel = channel, model = model)
         }
         ChatBox(modifier = Modifier.align(Alignment.BottomStart).padding(10.dp),
             sendMessage = {
                 scope.launch {
-                    QMessenger.sendMessage(it, channel, user)
+                    QMessenger.sendMessage(it, channel, user).let {
+                        if (it.isFailure) {
+                            it.exceptionOrNull()?.let { it1 -> println(it1) }
+                        }
+                    }
                 }
             })
     }
 }
 
 @Composable
-fun Conversation(modifier: Modifier = Modifier, user: Account, channel: Channel) {
-    val messages = remember { mutableStateListOf<ChatMessage<*>>() }
+fun Conversation(modifier: Modifier = Modifier, user: Account, channel: Channel, model: MessageViewModel) {
     val scope = rememberCoroutineScope()
+    val messages = model.messages
     if (messages.isEmpty() || channel.id != messages[0].channel.id) {
         scope.launch {
             QMessenger.messages(channel, 0).let {
@@ -393,27 +424,6 @@ fun Conversation(modifier: Modifier = Modifier, user: Account, channel: Channel)
                     if (res.code == 200) {
                         messages.clear()
                         messages.addAll(res.data!!.reversed())
-                    }
-                }
-            }
-        }
-    }
-    LaunchedEffect(Unit) {
-        QMessenger.websocket()?.apply {
-            for (msg in incoming) {
-                when (msg) {
-                    is Frame.Text -> {
-                        val response: WebsocketResponse<JsonObject> =
-                            JSON.decodeFromString(msg.readText())
-                        if (response.method == WebsocketResponse.NEW_MESSAGE) {
-                            val message: ChatMessage<BaseMessage> =
-                                JSON.decodeFromJsonElement(response.data!!)
-                            messages.add(message)
-                        }
-                    }
-
-                    else -> {
-
                     }
                 }
             }

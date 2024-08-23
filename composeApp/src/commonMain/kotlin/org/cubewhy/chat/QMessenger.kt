@@ -11,6 +11,7 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import io.ktor.http.headers
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
@@ -23,8 +24,13 @@ val client = getHttpClient {
     install(ContentNegotiation) {
         json()
     }
+    headers {
+        set("User-Agent", "qmsg-client")
+    }
 
-    install(WebSockets)
+    install(WebSockets) {
+        pingInterval = 10_000
+    }
 }
 
 object QMessenger {
@@ -53,15 +59,10 @@ object QMessenger {
     }
 
     suspend fun websocket(): WebSocketSession? {
-        if (session == null) {
+        if (session == null || session?.isActive == false) {
             session = runCatching {
                 client.webSocketSession(config.websocket) {
                     header("Authorization", "Bearer ${config.user!!.token}")
-                }.apply {
-                    while (isActive) {
-                        delay(10.seconds)
-                        send(Frame.Pong(ByteArray(0))) // Sending an empty Pong frame
-                    }
                 }
             }.let {
                 if (it.isSuccess) it.getOrThrow()
@@ -91,7 +92,7 @@ object QMessenger {
         response.data!!
     }
 
-    suspend fun sendMessage(text: String, channel: Channel, user: Account) {
+    suspend fun sendMessage(text: String, channel: Channel, user: Account) = runCatching {
         val preview = text.split("\n")[0]
         val message = ChatMessageDTO(
             channel = channel.id,
@@ -99,7 +100,7 @@ object QMessenger {
             contentType = MessageType.TEXT,
             content = BaseMessage(data = text)
         )
-        this.websocket()?.send(
+        this.websocket()!!.send(
             JSON.encodeToString(
                 WebsocketRequest.serializer(ChatMessageDTO.serializer(BaseMessage.serializer())),
                 WebsocketRequest(WebsocketRequest.SEND_MESSAGE, message)
