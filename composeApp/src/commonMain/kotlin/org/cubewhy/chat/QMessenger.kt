@@ -12,9 +12,12 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.send
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlin.time.Duration.Companion.seconds
 
 val client = getHttpClient {
     install(ContentNegotiation) {
@@ -54,6 +57,11 @@ object QMessenger {
             session = runCatching {
                 client.webSocketSession(config.websocket) {
                     header("Authorization", "Bearer ${config.user!!.token}")
+                }.apply {
+                    while (isActive) {
+                        delay(10.seconds)
+                        send(Frame.Pong(ByteArray(0))) // Sending an empty Pong frame
+                    }
                 }
             }.let {
                 if (it.isSuccess) it.getOrThrow()

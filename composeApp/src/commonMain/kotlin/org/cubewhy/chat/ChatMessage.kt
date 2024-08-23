@@ -64,7 +64,7 @@ inline fun ChatMessage(isMyMessage: Boolean, message: ChatMessage<*>) {
             if (!isMyMessage) {
                 Column {
                     AsyncImage(
-                        modifier = Modifier.clip(CircleShape),
+                        modifier = Modifier.clip(CircleShape).size(40.dp),
                         model = "${config.api}/api/avatar/image/${message.sender.username}",
                         contentDescription = "Avatar of channel ${message.sender.username}",
                         imageLoader = imageLoader

@@ -13,6 +13,7 @@ actual fun pushNotification(title: String, body: String) {
     val notificationBuilder =
         NotificationCompat.Builder(activity, activity.getString(R.string.push_channel_buildin))
             .setContentTitle(title)
+            .setSmallIcon(R.mipmap.ic_launcher_foreground)
             .setContentText(body)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_RECOMMENDATION)

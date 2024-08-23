@@ -311,24 +311,26 @@ fun MessageScreen(channel: Channel, user: Account, onDismiss: () -> Unit) {
     val scope = rememberCoroutineScope()
     LaunchedEffect(Unit) {
         QMessenger.websocket()?.apply {
-            for (wsMessage in incoming) {
-                when (wsMessage) {
-                    is Frame.Text -> {
-                        val response: WebsocketResponse<JsonObject> =
-                            JSON.decodeFromString(wsMessage.readText())
-                        if (response.method == WebsocketResponse.NEW_MESSAGE) {
-                            val msg: ChatMessage<BaseMessage> =
-                                JSON.decodeFromJsonElement(response.data!!)
-                            if (msg.sender.id != user.id) {
-                                pushNotification(
-                                    msg.channel.title ?: msg.channel.name, msg.shortContent
-                                )
+            runCatching {
+                for (wsMessage in incoming) {
+                    when (wsMessage) {
+                        is Frame.Text -> {
+                            val response: WebsocketResponse<JsonObject> =
+                                JSON.decodeFromString(wsMessage.readText())
+                            if (response.method == WebsocketResponse.NEW_MESSAGE) {
+                                val msg: ChatMessage<BaseMessage> =
+                                    JSON.decodeFromJsonElement(response.data!!)
+                                if (msg.sender.id != user.id) {
+                                    pushNotification(
+                                        msg.channel.title ?: msg.channel.name, msg.shortContent
+                                    )
+                                }
                             }
                         }
-                    }
 
-                    else -> {
-                        // unknown type
+                        else -> {
+                            // unknown type
+                        }
                     }
                 }
             }
@@ -383,17 +385,22 @@ fun MessageScreen(channel: Channel, user: Account, onDismiss: () -> Unit) {
 fun Conversation(modifier: Modifier = Modifier, user: Account, channel: Channel) {
     val messages = remember { mutableStateListOf<ChatMessage<*>>() }
     val scope = rememberCoroutineScope()
-    LaunchedEffect(Unit) {
-        QMessenger.messages(channel, 0).let {
-            if (it.isSuccess) {
-                val res = it.getOrThrow()
-                if (res.code == 200) {
-                    messages.addAll(res.data!!)
+    if (messages.isEmpty() || channel.id != messages[0].channel.id) {
+        scope.launch {
+            QMessenger.messages(channel, 0).let {
+                if (it.isSuccess) {
+                    val res = it.getOrThrow()
+                    if (res.code == 200) {
+                        messages.clear()
+                        messages.addAll(res.data!!.reversed())
+                    }
                 }
             }
         }
-        QMessenger.websocket()?.let {
-            for (msg in it.incoming) {
+    }
+    LaunchedEffect(Unit) {
+        QMessenger.websocket()?.apply {
+            for (msg in incoming) {
                 when (msg) {
                     is Frame.Text -> {
                         val response: WebsocketResponse<JsonObject> =
