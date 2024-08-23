@@ -1,6 +1,8 @@
 package org.cubewhy.chat
 
+import androidx.compose.ui.graphics.Color
 import kotlinx.serialization.Serializable
+import kotlin.random.Random
 
 // https://github.com/cubewhy/QMsgBackend/tree/master/src/main/java/org/cubewhy/chat/entity
 
@@ -126,7 +128,7 @@ data class Channel(
     val title: String?,
     val description: String,
 
-    val iconHash: String?,
+    val iconHash: String? = null,
     val publicChannel: Boolean,
     val decentralized: Boolean,
 
@@ -149,12 +151,36 @@ data class ChannelDTO(
 data class ChatMessage<T>(
     val id: Long,
     val channel: Channel,
-    val sender: Long,
+    val sender: Sender,
     val contentType: String,
     val shortContent: String,
     val content: T,
     val timestamp: Long,
 )
+
+@Serializable
+data class Sender(
+    val id: Long,
+    val nickname: String,
+    val username: String
+)
+
+fun generateColorFromStringLength(username: String): Long {
+    // 获取字符串长度
+    val length = username.length
+
+    // 计算随机颜色的种子值
+    val seed = length * 1234567L
+
+    // 使用种子值生成随机颜色
+    val random = Random(seed)
+    val red = random.nextInt(200) + 25
+    val green = random.nextInt(200) + 25
+    val blue = random.nextInt(200) + 25
+
+    // 将RGB颜色转换为整数形式
+    return ((red shl 16) or (green shl 8) or blue).toLong()
+}
 
 @Serializable
 data class ChatMessageDTO<T>(

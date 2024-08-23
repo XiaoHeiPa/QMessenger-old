@@ -50,7 +50,7 @@ object QMessenger {
     }
 
     suspend fun websocket(): WebSocketSession? {
-        if (session == null || session?.isActive == true) {
+        if (session == null) {
             session = runCatching {
                 client.webSocketSession(config.websocket) {
                     header("Authorization", "Bearer ${config.user!!.token}")
@@ -135,8 +135,8 @@ object QMessenger {
     }
 
     suspend fun messages(channel: Channel, page: Int) = runCatching {
-        val response: RestBean<ChatMessage<BaseMessage>> =
-            client.get("${config.api}/api/channel/messages?channel=${channel.id}&page$page&size=100") {
+        val response: RestBean<List<ChatMessage<BaseMessage>>> =
+            client.get("${config.api}/api/channel/messages?channel=${channel.id}&page=$page&size=100") {
                 header("Authorization", "Bearer ${config.user!!.token}")
             }.body()
         response

@@ -9,6 +9,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -317,9 +319,11 @@ fun MessageScreen(channel: Channel, user: Account, onDismiss: () -> Unit) {
                         if (response.method == WebsocketResponse.NEW_MESSAGE) {
                             val msg: ChatMessage<BaseMessage> =
                                 JSON.decodeFromJsonElement(response.data!!)
-                            pushNotification(
-                                msg.channel.title ?: msg.channel.name, msg.shortContent
-                            )
+                            if (msg.sender.id != user.id) {
+                                pushNotification(
+                                    msg.channel.title ?: msg.channel.name, msg.shortContent
+                                )
+                            }
                         }
                     }
 
@@ -364,7 +368,7 @@ fun MessageScreen(channel: Channel, user: Account, onDismiss: () -> Unit) {
                 }
             }
             HorizontalDivider()
-            Conversation()
+            Conversation(user = user, channel = channel)
         }
         ChatBox(modifier = Modifier.align(Alignment.BottomStart).padding(10.dp),
             sendMessage = {
@@ -376,8 +380,57 @@ fun MessageScreen(channel: Channel, user: Account, onDismiss: () -> Unit) {
 }
 
 @Composable
-fun Conversation(modifier: Modifier = Modifier) {
-    Text("Hello World")
+fun Conversation(modifier: Modifier = Modifier, user: Account, channel: Channel) {
+    val messages = remember { mutableStateListOf<ChatMessage<*>>() }
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(Unit) {
+        QMessenger.messages(channel, 0).let {
+            if (it.isSuccess) {
+                val res = it.getOrThrow()
+                if (res.code == 200) {
+                    messages.addAll(res.data!!)
+                }
+            }
+        }
+        QMessenger.websocket()?.let {
+            for (msg in it.incoming) {
+                when (msg) {
+                    is Frame.Text -> {
+                        val response: WebsocketResponse<JsonObject> =
+                            JSON.decodeFromString(msg.readText())
+                        if (response.method == WebsocketResponse.NEW_MESSAGE) {
+                            val message: ChatMessage<BaseMessage> =
+                                JSON.decodeFromJsonElement(response.data!!)
+                            messages.add(message)
+                        }
+                    }
+
+                    else -> {
+
+                    }
+                }
+            }
+        }
+    }
+    val listState = rememberLazyListState()
+    if (messages.isNotEmpty()) {
+        LaunchedEffect(messages.last()) {
+            listState.animateScrollToItem(messages.lastIndex, scrollOffset = 2)
+        }
+    }
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().padding(start = 4.dp, end = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        state = listState,
+    ) {
+        item { Spacer(Modifier.size(20.dp)) }
+        items(messages, key = { it.id }) {
+            ChatMessage(isMyMessage = it.sender.id == user.id, it)
+        }
+        item {
+            Box(Modifier.height(70.dp))
+        }
+    }
 }
 
 @Composable
@@ -401,6 +454,7 @@ fun ChatBox(
                         textState = TextFieldValue(newText, newCursorPosition)
                         true
                     }
+
                     event.key == Key.Enter -> {
                         // Handle Enter (Send Message)
                         sendMessage(textState.text)
