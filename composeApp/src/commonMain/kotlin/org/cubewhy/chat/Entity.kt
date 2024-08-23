@@ -135,6 +135,17 @@ data class Channel(
 )
 
 @Serializable
+data class ChannelDTO(
+    val name: String,
+    val title: String,
+    val description: String,
+    val iconHash: String? = null,
+
+    val publicChannel: Boolean = false,
+    val decentralized: Boolean = false
+)
+
+@Serializable
 data class ChatMessage<T>(
     val id: Long,
     val channel: Channel,

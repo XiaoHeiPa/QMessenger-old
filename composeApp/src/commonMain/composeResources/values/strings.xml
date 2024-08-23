@@ -22,4 +22,17 @@
     <string name="user_info">User info</string>
     <string name="close">Close</string>
     <string name="disconnected">Unable to connect to chat server (*server*)</string>
+    <string name="create_channel">Create Channel</string>
+    <string name="create_channel_title">Create a Channel</string>
+    <string name="join_channel">Join Channel</string>
+    <string name="join_channel_title">Join a Channel</string>
+    <string name="switch_to_join_channel">Switch to Join Channel</string>
+    <string name="switch_to_create_channel">Switch to Create Channel</string>
+    <string name="channel_invite_code">Channel invite code</string>
+    <string name="channel_title">Shown name</string>
+    <string name="channel_description">Channel description</string>
+    <string name="channel_name">Channel Name (used for find channel)</string>
+    <string name="decentralized_channel">Decentralized Channel</string>
+    <string name="public_channel">Public Channel</string>
+    <string name="add_contact_tip">There is no concept of friends in QMessenger. All conversations are called channels.</string>
 </resources>

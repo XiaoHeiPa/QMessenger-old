@@ -9,7 +9,6 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,9 +25,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
@@ -52,8 +51,14 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.isShiftPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -86,10 +91,10 @@ fun ChatScreen(nav: NavController, navToChat: (Channel, Account) -> Unit) {
     val isAndroid = getPlatform().type == PlatformType.ANDROID
     val scope = rememberCoroutineScope()
     var user by remember { mutableStateOf<Account?>(null) }
-    val imageLoader = ImageLoader.Builder(LocalPlatformContext.current)
-        .diskCachePolicy(CachePolicy.DISABLED)
-        .memoryCachePolicy(CachePolicy.ENABLED)
-        .build()
+    var action by remember { mutableStateOf<String?>(null) }
+    val imageLoader =
+        ImageLoader.Builder(LocalPlatformContext.current).diskCachePolicy(CachePolicy.DISABLED)
+            .memoryCachePolicy(CachePolicy.ENABLED).build()
 
     if (user == null) {
         loadUser(scope) {
@@ -106,24 +111,18 @@ fun ChatScreen(nav: NavController, navToChat: (Channel, Account) -> Unit) {
         if (!isAndroid || (isAndroid && currentChannel == null)) {
             Box(modifier = Modifier.padding(5.dp).fillMaxHeight()) {
                 Row(modifier = Modifier.align(Alignment.TopStart)) {
-                    IconButton(
-                        onClick = {
-                            fold = !fold
-                            config.fold = fold
-                        }
-                    ) {
+                    IconButton(onClick = {
+                        fold = !fold
+                        config.fold = fold
+                    }) {
                         Icon(
-                            imageVector = Icons.Filled.Menu,
-                            contentDescription = "Menu"
+                            imageVector = Icons.Filled.Menu, contentDescription = "Menu"
                         )
                     }
                     AnimatedVisibility(!fold) {
                         var showUserInfo by remember { mutableStateOf(false) }
                         AnimatedVisibility(visible = showUserInfo) {
-                            UserInfoDialog(
-                                userInfo = user,
-                                onDismiss = { showUserInfo = false }
-                            )
+                            UserInfoDialog(userInfo = user, onDismiss = { showUserInfo = false })
                         }
                         IconButton(onClick = {
                             showUserInfo = true
@@ -139,22 +138,21 @@ fun ChatScreen(nav: NavController, navToChat: (Channel, Account) -> Unit) {
                 }
 
                 LazyColumn(modifier = Modifier.align(Alignment.CenterStart)) {
-                    items(
-                        channels,
-                        key = {
-                            it.id
-                        }
-                    ) { channel ->
+                    items(channels, key = {
+                        it.id
+                    }) { channel ->
                         val isCurrent = currentChannel != null && currentChannel!!.id == channel.id
-                        Row(modifier = Modifier.clickable { currentChannel = channel }
-                            .clip(RoundedCornerShape(5.dp))
-                            .animateContentSize(
+                        Row(
+                            modifier = Modifier.clickable {
+                                currentChannel = channel
+                                action = "CHAT"
+                            }.clip(RoundedCornerShape(5.dp)).animateContentSize(
                                 animationSpec = tween(durationMillis = 300)
                             )
-                            .background(if (isCurrent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.background)) {
+                                .background(if (isCurrent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.background)
+                        ) {
                             AsyncImage(
-                                modifier = Modifier.size(50.dp, 50.dp)
-                                    .clip(CircleShape),
+                                modifier = Modifier.size(50.dp, 50.dp).clip(CircleShape),
                                 model = "${config.api}/api/avatar/image/${channel.name}",
                                 contentDescription = "Avatar of channel ${channel.name}",
                                 imageLoader = imageLoader
@@ -172,25 +170,19 @@ fun ChatScreen(nav: NavController, navToChat: (Channel, Account) -> Unit) {
                     }
                 }
                 Row(modifier = Modifier.align(Alignment.BottomStart)) {
-                    IconButton(
-                        onClick = {
-
-                        }
-                    ) {
+                    IconButton(onClick = {
+                        action = "ADD_CONTACT"
+                    }) {
                         Icon(
-                            imageVector = Icons.Filled.Add,
-                            contentDescription = "Add contact"
+                            imageVector = Icons.Filled.Add, contentDescription = "Add contact"
                         )
                     }
                     AnimatedVisibility(!fold) {
-                        IconButton(
-                            onClick = {
+                        IconButton(onClick = {
 
-                            }
-                        ) {
+                        }) {
                             Icon(
-                                imageVector = Icons.Filled.Settings,
-                                contentDescription = "Settings"
+                                imageVector = Icons.Filled.Settings, contentDescription = "Settings"
                             )
                         }
                     }
@@ -207,7 +199,7 @@ fun ChatScreen(nav: NavController, navToChat: (Channel, Account) -> Unit) {
             }
         } else {
             AnimatedVisibility(
-                visible = currentChannel != null,
+                visible = currentChannel != null && action == "CHAT",
                 enter = slideInVertically(initialOffsetY = { it }) + fadeIn(
                     animationSpec = tween(
                         durationMillis = 300
@@ -224,7 +216,9 @@ fun ChatScreen(nav: NavController, navToChat: (Channel, Account) -> Unit) {
                         Box(modifier = Modifier.fillMaxSize()) {
                             Text(
                                 modifier = Modifier.align(Alignment.Center),
-                                text = stringResource(Res.string.disconnected).replace("*server*", config.serverUrl)
+                                text = stringResource(Res.string.disconnected).replace(
+                                    "*server*", config.serverUrl
+                                )
                             )
                         }
                     } else {
@@ -236,13 +230,40 @@ fun ChatScreen(nav: NavController, navToChat: (Channel, Account) -> Unit) {
             }
         }
         AnimatedVisibility(
-            visible = currentChannel == null,
+            visible = action == "ADD_CONTACT",
             enter = slideInVertically(initialOffsetY = { it }) + fadeIn(
                 animationSpec = tween(
                     durationMillis = 300
                 )
             ),
             exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(
+                animationSpec = tween(
+                    durationMillis = 300
+                )
+            )
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                IconButton(modifier = Modifier.align(Alignment.TopStart), onClick = {
+                    action = null
+                }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back"
+                    )
+                }
+                AddContact(modifier = Modifier.fillMaxSize().align(Alignment.Center)) {
+                    currentChannel = null
+                    loadChannels(scope, channels)
+                }
+            }
+
+        }
+        AnimatedVisibility(
+            visible = action == null, enter = slideInVertically(initialOffsetY = { it }) + fadeIn(
+                animationSpec = tween(
+                    durationMillis = 300
+                )
+            ), exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(
                 animationSpec = tween(
                     durationMillis = 300
                 )
@@ -259,11 +280,10 @@ fun ChatScreen(nav: NavController, navToChat: (Channel, Account) -> Unit) {
 }
 
 private fun loadUser(
-    scope: CoroutineScope,
-    ok: (Account) -> Unit
+    scope: CoroutineScope, ok: (Account) -> Unit
 ) {
     scope.launch {
-        QMessenger.user(config.user!!.token).let {
+        QMessenger.user().let {
             if (it.isSuccess) {
                 ok(it.getOrThrow())
             }
@@ -272,8 +292,7 @@ private fun loadUser(
 }
 
 private fun loadChannels(
-    scope: CoroutineScope,
-    channels: SnapshotStateList<Channel>
+    scope: CoroutineScope, channels: SnapshotStateList<Channel>
 ) {
     scope.launch {
         QMessenger.channels().let {
@@ -299,8 +318,7 @@ fun MessageScreen(channel: Channel, user: Account, onDismiss: () -> Unit) {
                             val msg: ChatMessage<BaseMessage> =
                                 JSON.decodeFromJsonElement(response.data!!)
                             pushNotification(
-                                msg.channel.title ?: msg.channel.name,
-                                msg.shortContent
+                                msg.channel.title ?: msg.channel.name, msg.shortContent
                             )
                         }
                     }
@@ -316,13 +334,9 @@ fun MessageScreen(channel: Channel, user: Account, onDismiss: () -> Unit) {
         Column(modifier = Modifier.fillMaxSize().align(Alignment.Center)) {
             Box(modifier = Modifier.fillMaxWidth()) {
                 Row(modifier = Modifier.align(Alignment.TopStart)) {
-                    IconButton(
-                        modifier = Modifier.padding(
-                            vertical = 10.dp,
-                            horizontal = 5.dp
-                        ),
-                        onClick = { onDismiss() }
-                    ) {
+                    IconButton(modifier = Modifier.padding(
+                        vertical = 10.dp, horizontal = 5.dp
+                    ), onClick = { onDismiss() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
@@ -335,8 +349,7 @@ fun MessageScreen(channel: Channel, user: Account, onDismiss: () -> Unit) {
                         Text(
                             color = Color.Gray,
                             text = stringResource(Res.string.member_count).replace(
-                                "*count*",
-                                channel.memberCount.toString()
+                                "*count*", channel.memberCount.toString()
                             )
                         )
                     }
@@ -345,8 +358,7 @@ fun MessageScreen(channel: Channel, user: Account, onDismiss: () -> Unit) {
                 Column(modifier = Modifier.align(Alignment.TopEnd).padding(10.dp)) {
                     IconButton(onClick = {}) {
                         Icon(
-                            imageVector = Icons.Filled.Settings,
-                            contentDescription = "Settings"
+                            imageVector = Icons.Filled.Settings, contentDescription = "Settings"
                         )
                     }
                 }
@@ -354,15 +366,12 @@ fun MessageScreen(channel: Channel, user: Account, onDismiss: () -> Unit) {
             HorizontalDivider()
             Conversation()
         }
-        ChatBox(
-            modifier = Modifier.align(Alignment.BottomStart).padding(10.dp),
-            onMenuClicked = {},
-            onSendMessageClicked = {
+        ChatBox(modifier = Modifier.align(Alignment.BottomStart).padding(10.dp),
+            sendMessage = {
                 scope.launch {
                     QMessenger.sendMessage(it, channel, user)
                 }
-            }
-        )
+            })
     }
 }
 
@@ -373,115 +382,108 @@ fun Conversation(modifier: Modifier = Modifier) {
 
 @Composable
 fun ChatBox(
-    modifier: Modifier = Modifier,
-    onMenuClicked: () -> Unit,
-    onSendMessageClicked: (String) -> Unit
+    modifier: Modifier = Modifier, sendMessage: (String) -> Unit
 ) {
-    var chatBoxValue by remember {
-        mutableStateOf(TextFieldValue(""))
-    }
-    var btnMethodIsSend by remember {
-        mutableStateOf(false)
-    }
-    Row(modifier = modifier) {
-        TextField(
-            value = chatBoxValue,
-            onValueChange = { newValue ->
-                chatBoxValue = newValue // update text
-                btnMethodIsSend = newValue.text.isNotEmpty()
-            },
-            modifier = Modifier
-                .weight(1f)
-                .padding(4.dp),
-            shape = RoundedCornerShape(24.dp),
-            colors = TextFieldDefaults.colors(
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent
-            ),
-            placeholder = {
-                Text(text = "Typing...")
-            }
-        )
-        IconButton(
-            onClick = {
-                val msg = chatBoxValue.text
-                if (msg.isBlank()) return@IconButton
-                if (btnMethodIsSend) {
-                    onSendMessageClicked(chatBoxValue.text)
-                } else {
-                    onMenuClicked()
+    var textState by remember { mutableStateOf(TextFieldValue()) }
+    val focusRequester = FocusRequester()
+
+    TextField(
+        modifier = modifier.fillMaxWidth()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(10.dp)
+            .focusRequester(focusRequester)
+            .onKeyEvent { event ->
+                when {
+                    event.key == Key.Enter && event.isShiftPressed -> {
+                        // Handle Shift + Enter (New Line)
+                        val newText = textState.text + "\n"
+                        val newCursorPosition = TextRange(newText.length)
+                        textState = TextFieldValue(newText, newCursorPosition)
+                        true
+                    }
+                    event.key == Key.Enter -> {
+                        // Handle Enter (Send Message)
+                        sendMessage(textState.text)
+                        textState = TextFieldValue("")
+                        true
+                    }
+
+                    else -> false
                 }
-                chatBoxValue = TextFieldValue("") // clear text field
             },
-            modifier = Modifier
-                .clip(CircleShape)
-                .background(color = MaterialTheme.colorScheme.onPrimary)
-                .align(Alignment.CenterVertically)
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onLongPress = {
-                            onMenuClicked()
+        colors = TextFieldDefaults.colors(),
+        value = textState,
+        placeholder = {
+            Text("Type message...")
+        },
+        onValueChange = {
+            textState = it
+        },
+        trailingIcon = {
+            if (textState.text.isNotEmpty()) {
+                Row(
+                    modifier = Modifier
+                        .clickable {
+                            sendMessage(textState.text)
+                            textState = TextFieldValue("")
                         }
+                        .padding(10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Send,
+                        contentDescription = "Send",
+                        tint = MaterialTheme.colorScheme.primary
                     )
+                    Text("Send")
                 }
-        ) {
-            Icon(
-                imageVector = if (btnMethodIsSend) Icons.AutoMirrored.Filled.Send else Icons.Filled.Add,
-                contentDescription = "Function btn",
-                modifier = Modifier
-                    .padding(8.dp)
-            )
+            }
         }
-    }
+    )
 }
 
 @Composable
 fun UserInfoDialog(
-    userInfo: Account?,
-    onDismiss: () -> Unit
+    userInfo: Account?, onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(text = stringResource(Res.string.user_info))
-        },
-        text = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                if (userInfo == null) {
-                    Text(stringResource(Res.string.disconnected).replace("*server*", config.serverUrl))
-                } else {
-                    Text(
-                        text = "ID: ${userInfo.id}",
-                        style = TextStyle(fontSize = 16.sp),
-                        modifier = Modifier.padding(bottom = 8.dp)
+    AlertDialog(onDismissRequest = onDismiss, title = {
+        Text(text = stringResource(Res.string.user_info))
+    }, text = {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(16.dp)
+        ) {
+            if (userInfo == null) {
+                Text(
+                    stringResource(Res.string.disconnected).replace(
+                        "*server*", config.serverUrl
                     )
-                    Text(
-                        text = "Nickname: ${userInfo.nickname}",
-                        style = TextStyle(fontSize = 16.sp),
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    Text(
-                        text = "Username: ${userInfo.username}",
-                        style = TextStyle(fontSize = 16.sp),
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    Text(
-                        text = "Bio: ${userInfo.bio}",
-                        style = TextStyle(fontSize = 16.sp),
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.close))
+                )
+            } else {
+                Text(
+                    text = "ID: ${userInfo.id}",
+                    style = TextStyle(fontSize = 16.sp),
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Text(
+                    text = "Nickname: ${userInfo.nickname}",
+                    style = TextStyle(fontSize = 16.sp),
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Text(
+                    text = "Username: ${userInfo.username}",
+                    style = TextStyle(fontSize = 16.sp),
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Text(
+                    text = "Bio: ${userInfo.bio}",
+                    style = TextStyle(fontSize = 16.sp),
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
             }
         }
-    )
+    }, confirmButton = {
+        TextButton(onClick = onDismiss) {
+            Text(stringResource(Res.string.close))
+        }
+    })
 }

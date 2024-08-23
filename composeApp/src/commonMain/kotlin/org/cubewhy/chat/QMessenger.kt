@@ -9,10 +9,12 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.send
-import kotlinx.serialization.builtins.serializer
+import kotlinx.coroutines.isActive
 
 val client = getHttpClient {
     install(ContentNegotiation) {
@@ -48,7 +50,7 @@ object QMessenger {
     }
 
     suspend fun websocket(): WebSocketSession? {
-        if (session == null) {
+        if (session == null || session?.isActive == true) {
             session = runCatching {
                 client.webSocketSession(config.websocket) {
                     header("Authorization", "Bearer ${config.user!!.token}")
@@ -71,7 +73,7 @@ object QMessenger {
         response.data!!
     }
 
-    suspend fun user(token: String): Result<Account> = runCatching {
+    suspend fun user(): Result<Account> = runCatching {
         val response: RestBean<Account> = client.get("${config.api}/api/user/whoami") {
             header("Authorization", "Bearer ${config.user!!.token}")
         }.body()
@@ -83,7 +85,12 @@ object QMessenger {
 
     suspend fun sendMessage(text: String, channel: Channel, user: Account) {
         val preview = text.split("\n")[0]
-        val message = ChatMessageDTO(channel = channel.id, shortContent = "${user.nickname}: $preview", contentType = MessageType.TEXT, content = BaseMessage(data = text))
+        val message = ChatMessageDTO(
+            channel = channel.id,
+            shortContent = "${user.nickname}: $preview",
+            contentType = MessageType.TEXT,
+            content = BaseMessage(data = text)
+        )
         this.websocket()?.send(
             JSON.encodeToString(
                 WebsocketRequest.serializer(ChatMessageDTO.serializer(BaseMessage.serializer())),
@@ -92,8 +99,47 @@ object QMessenger {
         )
     }
 
-    fun channel(id: Long): Channel {
+    suspend fun channel(id: Long): Channel {
         TODO("Not yet implemented")
+    }
+
+    suspend fun createChannel(
+        name: String,
+        description: String,
+        title: String,
+        isPublic: Boolean,
+        decentralized: Boolean
+    ) = runCatching {
+        val response: RestBean<Channel> = client.post("${config.api}/api/channel/create") {
+            header("Authorization", "Bearer ${config.user!!.token}")
+            contentType(ContentType.parse("application/json"))
+            setBody(
+                ChannelDTO(
+                    name = name,
+                    title = title,
+                    description = description,
+                    publicChannel = isPublic,
+                    decentralized = decentralized
+                )
+            )
+        }.body()
+        response
+    }
+
+    suspend fun joinChannel(inviteCode: String) = runCatching {
+        val response: RestBean<String> =
+            client.post("${config.api}/api/channel/invite/${inviteCode}/use") {
+                header("Authorization", "Bearer ${config.user!!.token}")
+            }.body()
+        response
+    }
+
+    suspend fun messages(channel: Channel, page: Int) = runCatching {
+        val response: RestBean<ChatMessage<BaseMessage>> =
+            client.get("${config.api}/api/channel/messages?channel=${channel.id}&page$page&size=100") {
+                header("Authorization", "Bearer ${config.user!!.token}")
+            }.body()
+        response
     }
 }
 

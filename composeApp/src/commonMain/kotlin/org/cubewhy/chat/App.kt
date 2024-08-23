@@ -160,10 +160,6 @@ fun App() {
                             navController.popBackStack()
                         }
                     }
-
-                    composable(route = Screen.ADD_CONTACT) {
-
-                    }
                 }
             }
         }
