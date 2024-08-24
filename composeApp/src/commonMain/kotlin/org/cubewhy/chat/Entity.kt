@@ -1,7 +1,8 @@
 package org.cubewhy.chat
 
-import androidx.compose.ui.graphics.Color
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import kotlin.random.Random
 
 // https://github.com/cubewhy/QMsgBackend/tree/master/src/main/java/org/cubewhy/chat/entity
@@ -148,15 +149,18 @@ data class ChannelDTO(
 )
 
 @Serializable
-data class ChatMessage<T>(
+data class ChatMessage(
     val id: Long,
     val channel: Channel,
     val sender: Sender,
-    val contentType: String,
     val shortContent: String,
-    val content: T,
+    val content: List<JsonObject>,
     val timestamp: Long,
-)
+) {
+    companion object {
+        const val TEXT: String = "t"
+    }
+}
 
 @Serializable
 data class Sender(
@@ -183,11 +187,10 @@ fun generateColorFromStringLength(username: String): Long {
 }
 
 @Serializable
-data class ChatMessageDTO<T>(
+data class ChatMessageDTO(
     val channel: Long,
     val shortContent: String,
-    val contentType: String,
-    val content: T
+    val content: List<JsonElement>
 )
 
 object MessageType {
@@ -195,6 +198,12 @@ object MessageType {
 }
 
 @Serializable
-data class BaseMessage(
-    val data: String
-)
+abstract class BaseMessage {
+    abstract val data: String
+    abstract val type: String
+}
+
+@Serializable
+class TextMessage(override val data: String, override var type: String) : BaseMessage() {
+}
+

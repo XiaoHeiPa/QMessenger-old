@@ -21,11 +21,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.encodeToJsonElement
 import kotlin.time.Duration.Companion.seconds
 
 val client = getHttpClient {
     install(ContentNegotiation) {
-        json()
+        json(json = JSON)
     }
     headers {
         set("User-Agent", "qmsg-client")
@@ -38,7 +39,6 @@ val client = getHttpClient {
 }
 
 object QMessenger {
-    lateinit var model: MessageViewModel
     private var channel: Channel? = null
     private var session: DefaultClientWebSocketSession? = null
 
@@ -91,14 +91,11 @@ object QMessenger {
         response.data!!
     }
 
-    suspend fun user(): Result<Account> = runCatching {
+    suspend fun user(): Result<RestBean<Account>> = runCatching {
         val response: RestBean<Account> = client.get("${config.api}/api/user/whoami") {
             header("Authorization", "Bearer ${config.user!!.token}")
         }.body()
-        if (response.code != 200) {
-            throw IllegalStateException(response.message)
-        }
-        response.data!!
+        response
     }
 
     suspend fun sendMessage(text: String, channel: Channel, user: Account) = runCatching {
@@ -106,12 +103,12 @@ object QMessenger {
         val message = ChatMessageDTO(
             channel = channel.id,
             shortContent = "${user.nickname}: $preview",
-            contentType = MessageType.TEXT,
-            content = BaseMessage(data = text)
+            content = listOf(JSON.encodeToJsonElement(TextMessage(data = text, type = MessageType.TEXT)))
         )
+        // TODO parse links
         this.websocket(user, channel)!!.send(
             JSON.encodeToString(
-                WebsocketRequest.serializer(ChatMessageDTO.serializer(BaseMessage.serializer())),
+                WebsocketRequest.serializer(ChatMessageDTO.serializer()),
                 WebsocketRequest(WebsocketRequest.SEND_MESSAGE, message)
             )
         )
@@ -153,7 +150,7 @@ object QMessenger {
     }
 
     suspend fun messages(channel: Channel, page: Int) = runCatching {
-        val response: RestBean<List<ChatMessage<BaseMessage>>> =
+        val response: RestBean<List<ChatMessage>> =
             client.get("${config.api}/api/channel/messages?channel=${channel.id}&page=$page&size=100") {
                 header("Authorization", "Bearer ${config.user!!.token}")
             }.body()

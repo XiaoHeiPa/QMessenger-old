@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -36,6 +38,7 @@ import coil3.request.CachePolicy
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.serialization.json.jsonPrimitive
 
 // https://github.com/JetBrains/compose-multiplatform
 
@@ -51,7 +54,7 @@ fun Triangle(risingToTheRight: Boolean, background: Color) {
 }
 
 @Composable
-inline fun ChatMessage(modifier: Modifier = Modifier, isMyMessage: Boolean, message: ChatMessage<*>) {
+fun ChatMessage(modifier: Modifier = Modifier, isMyMessage: Boolean, message: ChatMessage) {
     val imageLoader =
         ImageLoader.Builder(LocalPlatformContext.current).diskCachePolicy(CachePolicy.DISABLED)
             .memoryCachePolicy(CachePolicy.ENABLED).build()
@@ -106,14 +109,26 @@ inline fun ChatMessage(modifier: Modifier = Modifier, isMyMessage: Boolean, mess
                         }
                         Spacer(Modifier.size(3.dp))
                         SelectionContainer {
-                            Text(
-                                text = (message.content as BaseMessage).data,
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontSize = 18.sp,
-                                    letterSpacing = 0.sp
-                                ),
-                                color = MaterialTheme.colorScheme.background
-                            )
+                            Column {
+                                for (content in message.content) {
+                                    when (content["type"]?.jsonPrimitive?.content) {
+                                        (ChatMessage.TEXT) -> {
+                                            val content1 = JSON.decodeFromJsonElement(
+                                                TextMessage.serializer(),
+                                                content
+                                            )
+                                            Text(
+                                                text = content1.data,
+                                                style = MaterialTheme.typography.bodyMedium.copy(
+                                                    fontSize = 18.sp,
+                                                    letterSpacing = 0.sp
+                                                ),
+                                                color = MaterialTheme.colorScheme.background
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                         Spacer(Modifier.size(4.dp))
                         Row(

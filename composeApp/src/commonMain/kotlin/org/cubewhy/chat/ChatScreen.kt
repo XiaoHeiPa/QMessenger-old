@@ -78,7 +78,7 @@ import io.ktor.websocket.readText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.decodeFromJsonElement
 import org.jetbrains.compose.resources.stringResource
 import qmessenger.composeapp.generated.resources.Res
@@ -103,9 +103,18 @@ fun ChatScreen(nav: NavController, navToChat: (Channel, Account) -> Unit) {
             .memoryCachePolicy(CachePolicy.ENABLED).build()
 
     if (user == null) {
-        loadUser(scope) {
-            user = it
-        }
+        loadUser(
+            scope,
+            unauthorized = {
+                config.user = null
+                saveConfig(config)
+                nav.clearBackStack(Screen.LOGIN_FORM)
+                nav.navigate(Screen.LOGIN_FORM)
+            },
+            ok = {
+                user = it
+            }
+        )
     }
 
     LaunchedEffect(Unit) {
@@ -285,12 +294,17 @@ fun ChatScreen(nav: NavController, navToChat: (Channel, Account) -> Unit) {
 }
 
 private fun loadUser(
-    scope: CoroutineScope, ok: (Account) -> Unit
+    scope: CoroutineScope, unauthorized: () -> Unit, ok: (Account) -> Unit
 ) {
     scope.launch {
         QMessenger.user().let {
             if (it.isSuccess) {
-                ok(it.getOrThrow())
+                val response = it.getOrThrow()
+                if (response.code == 200) {
+                    ok(response.data!!)
+                } else if (response.code == 401) {
+                    unauthorized()
+                }
             } else {
                 it.exceptionOrNull()?.let { it1 -> println(it1) }
             }
@@ -314,9 +328,9 @@ private fun loadChannels(
 }
 
 class MessageViewModel : ViewModel() {
-    private val _messages = mutableStateMapOf<Long, SnapshotStateList<ChatMessage<*>>>()
+    private val _messages = mutableStateMapOf<Long, SnapshotStateList<ChatMessage>>()
 
-    fun addMessage(msg: ChatMessage<*>) {
+    fun addMessage(msg: ChatMessage) {
         with(_messages[msg.id]) {
             // IDEA的静态检测有问题,这么写只是为了绕过静态检测,实际上 this == null 就可以了
             if (this.isNullOrEmpty()) {
@@ -327,11 +341,11 @@ class MessageViewModel : ViewModel() {
         }
     }
 
-    operator fun get(id: Long): SnapshotStateList<ChatMessage<*>> {
+    operator fun get(id: Long): SnapshotStateList<ChatMessage> {
         return _messages[id] ?: mutableStateListOf()
     }
 
-    fun addAll(messages: List<ChatMessage<BaseMessage>>) {
+    fun addAll(messages: List<ChatMessage>) {
         for (message in messages) {
             addMessage(message)
         }
@@ -348,10 +362,10 @@ fun MessageScreen(channel: Channel, user: Account, onDismiss: () -> Unit) {
             for (wsMessage in it.incoming) {
                 when (wsMessage) {
                     is Frame.Text -> {
-                        val response: WebsocketResponse<JsonObject> =
+                        val response: WebsocketResponse<JsonElement> =
                             JSON.decodeFromString(wsMessage.readText())
                         if (response.method == WebsocketResponse.NEW_MESSAGE) {
-                            val msg: ChatMessage<BaseMessage> =
+                            val msg: ChatMessage =
                                 JSON.decodeFromJsonElement(response.data!!)
                             if (msg.sender.id != user.id) {
                                 pushNotification(
@@ -412,6 +426,7 @@ fun MessageScreen(channel: Channel, user: Account, onDismiss: () -> Unit) {
         }
         ChatBox(modifier = Modifier.align(Alignment.BottomStart).padding(10.dp),
             sendMessage = {
+                if (it.isEmpty()) return@ChatBox
                 scope.launch {
                     QMessenger.sendMessage(it, channel, user).let {
                         if (it.isFailure) {
@@ -489,8 +504,10 @@ fun ChatBox(
 
                     event.key == Key.Enter -> {
                         // Handle Enter (Send Message)
-                        sendMessage(textState.text)
-                        textState = TextFieldValue("")
+                        if (textState.text.isNotBlank()) {
+                            sendMessage(textState.text)
+                            textState = TextFieldValue("")
+                        }
                         true
                     }
 

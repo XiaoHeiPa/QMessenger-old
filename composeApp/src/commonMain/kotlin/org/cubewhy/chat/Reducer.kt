@@ -1,11 +1,11 @@
 package org.cubewhy.chat
 
 sealed interface Action {
-    data class SendMessage(val message: ChatMessage<*>) : Action
+    data class SendMessage(val message: ChatMessage) : Action
 }
 
 data class State(
-    val messages: List<ChatMessage<*>> = emptyList()
+    val messages: List<ChatMessage> = emptyList()
 )
 
 fun chatReducer(state: State, action: Action): State =
