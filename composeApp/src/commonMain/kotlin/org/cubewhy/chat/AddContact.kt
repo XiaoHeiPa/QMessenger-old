@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.with
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -88,17 +89,19 @@ fun AddContact(modifier: Modifier = Modifier, onSuccess: () -> Unit) {
             transitionSpec = {
                 // Transition animation
                 if (targetState) {
-                    slideInVertically(animationSpec = tween(300)) + fadeIn(animationSpec = tween(300)) with
-                            slideOutVertically(animationSpec = tween(300)) + fadeOut(
-                        animationSpec = tween(
-                            300
+                    (slideInVertically(animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))).togetherWith(
+                        slideOutVertically(animationSpec = tween(300)) + fadeOut(
+                            animationSpec = tween(
+                                300
+                            )
                         )
                     )
                 } else {
-                    slideInVertically(animationSpec = tween(300)) + fadeIn(animationSpec = tween(300)) with
-                            slideOutVertically(animationSpec = tween(300)) + fadeOut(
-                        animationSpec = tween(
-                            300
+                    (slideInVertically(animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))).togetherWith(
+                        slideOutVertically(animationSpec = tween(300)) + fadeOut(
+                            animationSpec = tween(
+                                300
+                            )
                         )
                     )
                 }.using(
