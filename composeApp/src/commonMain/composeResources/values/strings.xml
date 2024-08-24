@@ -35,4 +35,5 @@
     <string name="decentralized_channel">Decentralized Channel</string>
     <string name="public_channel">Public Channel</string>
     <string name="add_contact_tip">There is no concept of friends in QMessenger. All conversations are called channels.</string>
+    <string name="no_network">No network connection (*server*)</string>
 </resources>

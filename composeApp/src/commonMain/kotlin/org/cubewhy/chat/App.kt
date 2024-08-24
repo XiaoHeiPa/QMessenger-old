@@ -156,9 +156,14 @@ fun App() {
                     }
 
                     composable(route = Screen.CONVERSATION) {
-                        MessageScreen(viewModel.channel, viewModel.user) {
+                        MessageScreen(viewModel.channel, viewModel.user, navController) {
                             navController.popBackStack()
                         }
+                    }
+
+                    composable(route = Screen.CHANNEL_CONFIG + "{id}") { backStackEntry ->
+                        val id = backStackEntry.arguments?.getString("id")
+                        ChannelConfig(navController, id!!.toLong())
                     }
                 }
             }
@@ -167,6 +172,7 @@ fun App() {
 }
 
 object Screen {
+    const val CHANNEL_CONFIG = "channel-conf/"
     const val ADD_CONTACT = "add-contact"
     const val CHAT = "chat"
     const val CONVERSATION = "conv"

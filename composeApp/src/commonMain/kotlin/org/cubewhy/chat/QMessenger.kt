@@ -13,16 +13,9 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.headers
 import io.ktor.serialization.kotlinx.json.json
-import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
-import io.ktor.websocket.readText
 import io.ktor.websocket.send
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
-import kotlin.time.Duration.Companion.seconds
 
 val client = getHttpClient {
     install(ContentNegotiation) {
@@ -64,8 +57,8 @@ object QMessenger {
         response
     }
 
-    suspend fun websocket(user: Account, channel: Channel): WebSocketSession? {
-        if (this.channel == null || channel.id != this.channel?.id) {
+    suspend fun websocket(user: Account, channel: Channel?): WebSocketSession? {
+        if (this.channel == null || channel?.id != this.channel?.id) {
             this.channel = channel
         }
         if (session == null) {
@@ -114,8 +107,12 @@ object QMessenger {
         )
     }
 
-    suspend fun channel(id: Long): Channel {
-        TODO("Not yet implemented")
+    suspend fun channelConf(id: Long) = runCatching {
+        val response: RestBean<ChannelConfInfo> =
+            client.get("${config.api}/api/channel/${id}/myInfo") {
+                header("Authorization", "Bearer ${config.user!!.token}")
+            }.body()
+        response
     }
 
     suspend fun createChannel(

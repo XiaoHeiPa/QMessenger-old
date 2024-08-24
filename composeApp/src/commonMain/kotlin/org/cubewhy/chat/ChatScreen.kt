@@ -28,6 +28,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Settings
@@ -46,7 +48,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -67,25 +68,27 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
 import androidx.navigation.NavController
 import coil3.ImageLoader
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.CachePolicy
 import io.ktor.websocket.Frame
+import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.readText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.decodeFromJsonElement
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import qmessenger.composeapp.generated.resources.Res
 import qmessenger.composeapp.generated.resources.channel_tip
 import qmessenger.composeapp.generated.resources.close
 import qmessenger.composeapp.generated.resources.disconnected
 import qmessenger.composeapp.generated.resources.member_count
+import qmessenger.composeapp.generated.resources.no_network
 import qmessenger.composeapp.generated.resources.no_title
 import qmessenger.composeapp.generated.resources.user_info
 
@@ -98,6 +101,11 @@ fun ChatScreen(nav: NavController, navToChat: (Channel, Account) -> Unit) {
     val scope = rememberCoroutineScope()
     var user by remember { mutableStateOf<Account?>(null) }
     var action by remember { mutableStateOf<String?>(null) }
+
+    var debugInfo by remember { mutableStateOf<CheckStatus?>(null) }
+    var disconnected by remember { mutableStateOf(false) }
+    var disconnectMessage by remember { mutableStateOf("") }
+
     val imageLoader =
         ImageLoader.Builder(LocalPlatformContext.current).diskCachePolicy(CachePolicy.DISABLED)
             .memoryCachePolicy(CachePolicy.ENABLED).build()
@@ -118,6 +126,20 @@ fun ChatScreen(nav: NavController, navToChat: (Channel, Account) -> Unit) {
     }
 
     LaunchedEffect(Unit) {
+        QMessenger.check().let {
+            if (it.isSuccess) {
+                val response = it.getOrThrow()
+                if (response.code == 200) {
+                    debugInfo = response.data!!
+                } else {
+                    disconnected = true
+                    disconnectMessage = response.message
+                }
+            } else {
+                disconnected = true
+                disconnectMessage = getString(Res.string.no_network)
+            }
+        }
         loadChannels(scope, channels)
     }
 
@@ -236,7 +258,7 @@ fun ChatScreen(nav: NavController, navToChat: (Channel, Account) -> Unit) {
                             )
                         }
                     } else {
-                        MessageScreen(it, user!!) {
+                        MessageScreen(it, user!!, nav) {
                             currentChannel = null
                         }
                     }
@@ -288,6 +310,41 @@ fun ChatScreen(nav: NavController, navToChat: (Channel, Account) -> Unit) {
                     modifier = Modifier.align(Alignment.Center),
                     text = stringResource(Res.string.channel_tip)
                 )
+                if (disconnected) {
+                    Text(
+                        modifier = Modifier.align(Alignment.BottomCenter).clickable {
+                            // check connection
+                            scope.launch {
+                                if (QMessenger.check().isSuccess) {
+                                    disconnected = false
+                                    loadChannels(scope, channels)
+                                    // todo 重复的代码
+                                    loadUser(
+                                        scope,
+                                        unauthorized = {
+                                            config.user = null
+                                            saveConfig(config)
+                                            nav.clearBackStack(Screen.LOGIN_FORM)
+                                            nav.navigate(Screen.LOGIN_FORM)
+                                        },
+                                        ok = { newUser ->
+                                            user = newUser
+                                            scope.launch {
+                                                QMessenger.websocket(newUser, currentChannel)
+                                                    ?.let { session ->
+                                                        processMessage(session, newUser)
+                                                    }
+                                            }
+                                        }
+                                    )
+                                }
+
+                            }
+                        },
+                        text = disconnectMessage.replace("*server*", config.serverUrl),
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         }
     }
@@ -327,64 +384,14 @@ private fun loadChannels(
     }
 }
 
-class MessageViewModel : ViewModel() {
-    private val _messages = mutableStateMapOf<Long, SnapshotStateList<ChatMessage>>()
-
-    fun addMessage(msg: ChatMessage) {
-        with(_messages[msg.id]) {
-            // IDEA的静态检测有问题,这么写只是为了绕过静态检测,实际上 this == null 就可以了
-            if (this.isNullOrEmpty()) {
-                _messages[msg.id] = mutableStateListOf(msg)
-            } else {
-                this.add(msg)
-            }
-        }
-    }
-
-    operator fun get(id: Long): SnapshotStateList<ChatMessage> {
-        return _messages[id] ?: mutableStateListOf()
-    }
-
-    fun addAll(messages: List<ChatMessage>) {
-        for (message in messages) {
-            addMessage(message)
-        }
-    }
-}
-
 @Composable
-fun MessageScreen(channel: Channel, user: Account, onDismiss: () -> Unit) {
+fun MessageScreen(channel: Channel, user: Account, nav: NavController, onDismiss: () -> Unit) {
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         // 存在连接就不会做任何事情,不存在则开启连接
         QMessenger.websocket(user, channel)?.let {
-            for (wsMessage in it.incoming) {
-                when (wsMessage) {
-                    is Frame.Text -> {
-                        val response: WebsocketResponse<JsonElement> =
-                            JSON.decodeFromString(wsMessage.readText())
-                        if (response.method == WebsocketResponse.NEW_MESSAGE) {
-                            val msg: ChatMessage =
-                                JSON.decodeFromJsonElement(response.data!!)
-                            if (msg.sender.id != user.id) {
-                                pushNotification(
-                                    msg.channel.title ?: msg.channel.name, msg.shortContent
-                                )
-                            }
-                            store.send(
-                                Action.SendMessage(
-                                    msg
-                                )
-                            )
-                        }
-                    }
-
-                    else -> {
-                        // unknown type
-                    }
-                }
-            }
+            processMessage(it, user)
         }
     }
 
@@ -414,9 +421,12 @@ fun MessageScreen(channel: Channel, user: Account, onDismiss: () -> Unit) {
                 }
 
                 Column(modifier = Modifier.align(Alignment.TopEnd).padding(10.dp)) {
-                    IconButton(onClick = {}) {
+                    IconButton(onClick = {
+                        nav.navigate(Screen.CHANNEL_CONFIG + channel.id)
+                    }) {
                         Icon(
-                            imageVector = Icons.Filled.Settings, contentDescription = "Settings"
+                            imageVector = Icons.Filled.Settings,
+                            contentDescription = "Channel Settings"
                         )
                     }
                 }
@@ -424,17 +434,62 @@ fun MessageScreen(channel: Channel, user: Account, onDismiss: () -> Unit) {
             HorizontalDivider()
             Conversation(user = user, channel = channel)
         }
-        ChatBox(modifier = Modifier.align(Alignment.BottomStart).padding(10.dp),
-            sendMessage = {
-                if (it.isEmpty()) return@ChatBox
-                scope.launch {
-                    QMessenger.sendMessage(it, channel, user).let {
-                        if (it.isFailure) {
-                            it.exceptionOrNull()?.let { it1 -> println(it1) }
+        Row(modifier = Modifier.fillMaxWidth().align(Alignment.BottomStart)) {
+            IconButton(
+                modifier = Modifier.padding(5.dp),
+                onClick = {}
+            ) {
+                Icon(imageVector = Icons.Filled.Link, contentDescription = "Upload files")
+            }
+            IconButton(
+                modifier = Modifier.padding(5.dp),
+                onClick = {}) {
+                Icon(imageVector = Icons.Filled.Image, contentDescription = "Upload Image")
+            }
+            ChatBox(modifier = Modifier.padding(5.dp).clip(RoundedCornerShape(24.dp)),
+                sendMessage = {
+                    if (it.isEmpty()) return@ChatBox
+                    scope.launch {
+                        QMessenger.sendMessage(it, channel, user).let { result ->
+                            if (result.isFailure) {
+                                result.exceptionOrNull()?.let { it1 -> println(it1) }
+                            }
                         }
                     }
+                })
+        }
+    }
+}
+
+private suspend fun processMessage(
+    it: WebSocketSession,
+    user: Account
+) {
+    for (wsMessage in it.incoming) {
+        when (wsMessage) {
+            is Frame.Text -> {
+                val response: WebsocketResponse<JsonElement> =
+                    JSON.decodeFromString(wsMessage.readText())
+                if (response.method == WebsocketResponse.NEW_MESSAGE) {
+                    val msg: ChatMessage =
+                        JSON.decodeFromJsonElement(response.data!!)
+                    if (msg.sender.id != user.id) {
+                        pushNotification(
+                            msg.channel.title ?: msg.channel.name, msg.shortContent
+                        )
+                    }
+                    store.send(
+                        Action.SendMessage(
+                            msg
+                        )
+                    )
                 }
-            })
+            }
+
+            else -> {
+                // unknown type
+            }
+        }
     }
 }
 
@@ -466,7 +521,7 @@ fun Conversation(modifier: Modifier = Modifier, user: Account, channel: Channel)
         }
     }
     LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(start = 4.dp, end = 4.dp),
+        modifier = modifier.fillMaxSize().padding(start = 4.dp, end = 4.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         state = listState,
     ) {
@@ -490,7 +545,6 @@ fun ChatBox(
     TextField(
         modifier = modifier.fillMaxWidth()
             .background(MaterialTheme.colorScheme.background)
-            .padding(10.dp)
             .focusRequester(focusRequester)
             .onKeyEvent { event ->
                 when {
@@ -514,7 +568,11 @@ fun ChatBox(
                     else -> false
                 }
             },
-        colors = TextFieldDefaults.colors(),
+        colors = TextFieldDefaults.colors(
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent
+        ),
         value = textState,
         placeholder = {
             Text("Type message...")

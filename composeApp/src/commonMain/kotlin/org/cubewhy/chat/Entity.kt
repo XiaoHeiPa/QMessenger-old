@@ -66,7 +66,13 @@ enum class Permission(val type: Type) {
 @Serializable
 data class CheckStatus(
     val timestamp: Long,
-    val impl: String
+    val impl: String,
+    val motd: Motd? = null
+)
+
+@Serializable
+data class Motd(
+    val text: String,
 )
 
 @Serializable
@@ -204,6 +210,11 @@ abstract class BaseMessage {
 }
 
 @Serializable
-class TextMessage(override val data: String, override var type: String) : BaseMessage() {
-}
+class TextMessage(override val data: String, override var type: String) : BaseMessage()
+
+@Serializable
+data class ChannelConfInfo(
+    val nickname: String,
+    val permissions: Set<Permission>
+)
 

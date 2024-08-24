@@ -35,4 +35,5 @@
     <string name="decentralized_channel">去中心化频道</string>
     <string name="public_channel">公共频道</string>
     <string name="add_contact_tip">QMessenger中没有好友的概念,所有会话都叫做频道</string>
+    <string name="no_network">没有网络连接 (*server*)</string>
 </resources>
