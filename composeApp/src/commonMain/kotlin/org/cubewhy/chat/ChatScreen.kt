@@ -210,26 +210,28 @@ fun ChatScreen(nav: NavController, navToChat: (Channel, Account) -> Unit) {
                         AnimatedVisibility(visible = showUserInfo) {
                             UserInfoDialog(userInfo = user, onDismiss = { showUserInfo = false })
                         }
+                        Row {
+                            IconButton(onClick = {
+                                // todo settings
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Settings,
+                                    contentDescription = "Settings"
+                                )
+                            }
 
-                        IconButton(onClick = {
-                            // todo settings
-                        }) {
-                            Icon(
-                                imageVector = Icons.Filled.Settings, contentDescription = "Settings"
-                            )
-                        }
-                        IconButton(onClick = {
-                            showUserInfo = true
-                        }) {
-                            AsyncImage(
-                                modifier = Modifier.clip(CircleShape),
-                                model = "${config.api}/api/avatar/image/${user?.username}",
-                                contentDescription = "Avatar of user ${user?.username}",
-                                imageLoader = imageLoader
-                            )
+                            IconButton(onClick = {
+                                showUserInfo = true
+                            }) {
+                                AsyncImage(
+                                    modifier = Modifier.clip(CircleShape),
+                                    model = "${config.api}/api/avatar/image/${user?.username}",
+                                    contentDescription = "Avatar of user ${user?.username}",
+                                    imageLoader = imageLoader
+                                )
+                            }
                         }
                     }
-
                 }
             }
             VerticalDivider()
