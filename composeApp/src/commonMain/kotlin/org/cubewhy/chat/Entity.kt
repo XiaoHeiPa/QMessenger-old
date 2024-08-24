@@ -216,7 +216,7 @@ class TextMessage(override val data: String, override var type: String) : BaseMe
 
 @Serializable
 data class ChannelConfInfo(
-    val nickname: String,
+    var nickname: String,
     val permissions: Set<Permission>
 )
 
