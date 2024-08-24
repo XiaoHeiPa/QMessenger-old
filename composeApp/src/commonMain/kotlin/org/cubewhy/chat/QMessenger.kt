@@ -32,7 +32,8 @@ val client = getHttpClient {
     }
 
     install(WebSockets) {
-        pingInterval = 10_000
+        pingInterval = 5_000
+
     }
 }
 

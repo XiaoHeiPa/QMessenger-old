@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -72,7 +73,7 @@ inline fun ChatMessage(modifier: Modifier = Modifier, isMyMessage: Boolean, mess
                 }
                 Spacer(Modifier.size(2.dp))
                 Column {
-                    Triangle(true, ChatColors.OTHERS_MESSAGE)
+                    Triangle(true, MaterialTheme.colorScheme.onBackground)
                 }
             }
 
@@ -86,7 +87,7 @@ inline fun ChatMessage(modifier: Modifier = Modifier, isMyMessage: Boolean, mess
                             if (!isMyMessage) 0.dp else 10.dp
                         )
                     )
-                        .background(color = if (!isMyMessage) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary)
+                        .background(color = if (!isMyMessage) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.tertiary)
                         .padding(start = 10.dp, top = 5.dp, end = 10.dp, bottom = 5.dp),
                 ) {
                     Column {
@@ -104,14 +105,16 @@ inline fun ChatMessage(modifier: Modifier = Modifier, isMyMessage: Boolean, mess
                             }
                         }
                         Spacer(Modifier.size(3.dp))
-                        Text(
-                            text = (message.content as BaseMessage).data,
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontSize = 18.sp,
-                                letterSpacing = 0.sp
-                            ),
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
+                        SelectionContainer {
+                            Text(
+                                text = (message.content as BaseMessage).data,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontSize = 18.sp,
+                                    letterSpacing = 0.sp
+                                ),
+                                color = MaterialTheme.colorScheme.background
+                            )
+                        }
                         Spacer(Modifier.size(4.dp))
                         Row(
                             horizontalArrangement = Arrangement.End,
@@ -130,7 +133,7 @@ inline fun ChatMessage(modifier: Modifier = Modifier, isMyMessage: Boolean, mess
             }
             if (isMyMessage) {
                 Column {
-                    Triangle(false, MaterialTheme.colorScheme.primary)
+                    Triangle(false, MaterialTheme.colorScheme.tertiary)
                 }
             }
         }

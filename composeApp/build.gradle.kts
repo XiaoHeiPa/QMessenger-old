@@ -55,7 +55,8 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.preference.ktx)
             implementation(libs.androidx.activity.compose)
-            implementation(libs.io.ktor.ktor.client.okhttp)
+//            implementation(libs.io.ktor.ktor.client.okhttp)
+            implementation(libs.ktor.client.cio)
 
             //noinspection UseTomlInstead
             implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
@@ -88,7 +89,8 @@ kotlin {
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
-            implementation(libs.io.ktor.ktor.client.okhttp)
+//            implementation(libs.io.ktor.ktor.client.okhttp)
+            implementation(libs.ktor.client.cio)
         }
 
         wasmJsMain.dependencies {
