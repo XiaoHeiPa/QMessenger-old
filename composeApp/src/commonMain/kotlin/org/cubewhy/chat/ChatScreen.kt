@@ -156,19 +156,11 @@ fun ChatScreen(nav: NavController, navToChat: (Channel, Account) -> Unit) {
                         )
                     }
                     AnimatedVisibility(!fold) {
-                        var showUserInfo by remember { mutableStateOf(false) }
-                        AnimatedVisibility(visible = showUserInfo) {
-                            UserInfoDialog(userInfo = user, onDismiss = { showUserInfo = false })
-                        }
-                        IconButton(onClick = {
-                            showUserInfo = true
-                        }) {
-                            AsyncImage(
-                                modifier = Modifier.clip(CircleShape),
-                                model = "${config.api}/api/avatar/image/${user?.username}",
-                                contentDescription = "Avatar of channel ${user?.username}",
-                                imageLoader = imageLoader
-                            )
+                        Column {
+                            debugInfo?.serverName?.let { Text(
+                                text = it,
+                                style = MaterialTheme.typography.titleMedium
+                            ) }
                         }
                     }
                 }
@@ -214,14 +206,30 @@ fun ChatScreen(nav: NavController, navToChat: (Channel, Account) -> Unit) {
                         )
                     }
                     AnimatedVisibility(!fold) {
-                        IconButton(onClick = {
+                        var showUserInfo by remember { mutableStateOf(false) }
+                        AnimatedVisibility(visible = showUserInfo) {
+                            UserInfoDialog(userInfo = user, onDismiss = { showUserInfo = false })
+                        }
 
+                        IconButton(onClick = {
+                            // todo settings
                         }) {
                             Icon(
                                 imageVector = Icons.Filled.Settings, contentDescription = "Settings"
                             )
                         }
+                        IconButton(onClick = {
+                            showUserInfo = true
+                        }) {
+                            AsyncImage(
+                                modifier = Modifier.clip(CircleShape),
+                                model = "${config.api}/api/avatar/image/${user?.username}",
+                                contentDescription = "Avatar of user ${user?.username}",
+                                imageLoader = imageLoader
+                            )
+                        }
                     }
+
                 }
             }
             VerticalDivider()

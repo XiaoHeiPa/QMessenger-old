@@ -65,6 +65,7 @@ enum class Permission(val type: Type) {
 
 @Serializable
 data class CheckStatus(
+    val serverName: String,
     val timestamp: Long,
     val impl: String,
     val motd: Motd? = null
@@ -72,7 +73,8 @@ data class CheckStatus(
 
 @Serializable
 data class Motd(
-    val text: String,
+    val title: String,
+    val text: String
 )
 
 @Serializable
