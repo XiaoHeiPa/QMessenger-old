@@ -108,8 +108,7 @@ fun ChatScreen(nav: NavController, navToChat: (Channel, Account) -> Unit) {
         }
     }
 
-    if (channels.isEmpty()) {
-        // 不知道为什么重载的时候这里会被多次执行
+    LaunchedEffect(Unit) {
         loadChannels(scope, channels)
     }
 
