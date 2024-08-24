@@ -50,13 +50,13 @@ fun Triangle(risingToTheRight: Boolean, background: Color) {
 }
 
 @Composable
-inline fun ChatMessage(isMyMessage: Boolean, message: ChatMessage<*>) {
+inline fun ChatMessage(modifier: Modifier = Modifier, isMyMessage: Boolean, message: ChatMessage<*>) {
     val imageLoader =
         ImageLoader.Builder(LocalPlatformContext.current).diskCachePolicy(CachePolicy.DISABLED)
             .memoryCachePolicy(CachePolicy.ENABLED).build()
 
     Box(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         contentAlignment = if (isMyMessage) Alignment.CenterEnd else Alignment.CenterStart
     ) {
 

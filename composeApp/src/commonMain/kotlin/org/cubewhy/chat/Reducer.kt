@@ -12,7 +12,7 @@ fun chatReducer(state: State, action: Action): State =
     when (action) {
         is Action.SendMessage -> {
             state.copy(
-                messages = (state.messages + action.message).takeLast(100)
+                messages = (state.messages + action.message).takeLast(500)
             )
         }
     }

@@ -429,21 +429,20 @@ val store = CoroutineScope(SupervisorJob()).createStore()
 fun Conversation(modifier: Modifier = Modifier, user: Account, channel: Channel) {
     val scope = rememberCoroutineScope()
     val state by store.stateFlow.collectAsState()
-    if (state.messages.isEmpty() || state.messages.last().channel.id != channel.id) {
-        scope.launch {
-            QMessenger.messages(channel, 0).let {
-                if (it.isSuccess) {
-                    val res = it.getOrThrow()
-                    if (res.code == 200) {
-                        for (msg in res.data!!.reversed()) {
-                            if (!state.messages.contains(msg)) {
-                                store.send(Action.SendMessage(msg))
-                            }
+    LaunchedEffect(channel) {
+        QMessenger.messages(channel, 0).let {
+            if (it.isSuccess) {
+                val res = it.getOrThrow()
+                if (res.code == 200) {
+                    for (msg in res.data!!.reversed()) {
+                        if (!state.messages.contains(msg)) {
+                            store.send(Action.SendMessage(msg))
                         }
                     }
                 }
             }
         }
+
     }
     val listState = rememberLazyListState()
     if (state.messages.isNotEmpty()) {
@@ -457,7 +456,7 @@ fun Conversation(modifier: Modifier = Modifier, user: Account, channel: Channel)
         state = listState,
     ) {
         item { Spacer(Modifier.size(20.dp)) }
-        items(state.messages.filter { it.channel.id == channel.id }, key = { it.id }) {
+        items(items = state.messages.filter { it.channel.id == channel.id }, key = { it.id }) {
             ChatMessage(isMyMessage = it.sender.id == user.id, message = it)
         }
         item {
