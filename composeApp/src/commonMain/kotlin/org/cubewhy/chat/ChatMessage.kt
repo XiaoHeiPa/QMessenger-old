@@ -86,11 +86,11 @@ inline fun ChatMessage(isMyMessage: Boolean, message: ChatMessage<*>) {
                             if (!isMyMessage) 0.dp else 10.dp
                         )
                     )
-                        .background(color = if (!isMyMessage) ChatColors.OTHERS_MESSAGE else MaterialTheme.colorScheme.primary)
+                        .background(color = if (!isMyMessage) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary)
                         .padding(start = 10.dp, top = 5.dp, end = 10.dp, bottom = 5.dp),
                 ) {
                     Column {
-                        if(!isMyMessage) {
+                        if (!isMyMessage) {
                             Row(verticalAlignment = Alignment.Bottom) {
                                 Text(
                                     text = message.sender.nickname,
@@ -99,7 +99,7 @@ inline fun ChatMessage(isMyMessage: Boolean, message: ChatMessage<*>) {
                                         letterSpacing = 0.sp,
                                         fontSize = 14.sp
                                     ),
-                                    color = Color(generateColorFromStringLength(message.sender.username))
+                                    color = MaterialTheme.colorScheme.onSecondary
                                 )
                             }
                         }
@@ -128,7 +128,7 @@ inline fun ChatMessage(isMyMessage: Boolean, message: ChatMessage<*>) {
                 }
                 Box(Modifier.size(10.dp))
             }
-            if(isMyMessage) {
+            if (isMyMessage) {
                 Column {
                     Triangle(false, MaterialTheme.colorScheme.primary)
                 }
@@ -138,7 +138,6 @@ inline fun ChatMessage(isMyMessage: Boolean, message: ChatMessage<*>) {
 }
 
 
-
 // Adapted from https://stackoverflow.com/questions/65965852/jetpack-compose-create-chat-bubble-with-arrow-and-border-elevation
 class TriangleEdgeShape(val risingToTheRight: Boolean) : Shape {
     override fun createOutline(
@@ -146,7 +145,7 @@ class TriangleEdgeShape(val risingToTheRight: Boolean) : Shape {
         layoutDirection: LayoutDirection,
         density: Density
     ): Outline {
-        val trianglePath = if(risingToTheRight) {
+        val trianglePath = if (risingToTheRight) {
             Path().apply {
                 moveTo(x = 0f, y = size.height)
                 lineTo(x = size.width, y = 0f)

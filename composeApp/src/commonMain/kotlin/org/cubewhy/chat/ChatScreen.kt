@@ -46,6 +46,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -67,7 +68,6 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil3.ImageLoader
 import coil3.compose.AsyncImage
@@ -76,11 +76,7 @@ import coil3.request.CachePolicy
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.isActive
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
@@ -92,7 +88,6 @@ import qmessenger.composeapp.generated.resources.disconnected
 import qmessenger.composeapp.generated.resources.member_count
 import qmessenger.composeapp.generated.resources.no_title
 import qmessenger.composeapp.generated.resources.user_info
-import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun ChatScreen(nav: NavController, navToChat: (Channel, Account) -> Unit) {
@@ -320,49 +315,66 @@ private fun loadChannels(
 }
 
 class MessageViewModel : ViewModel() {
-    private val _messages = mutableStateListOf<ChatMessage<*>>()
-    val messages: SnapshotStateList<ChatMessage<*>> get() = _messages
+    private val _messages = mutableStateMapOf<Long, SnapshotStateList<ChatMessage<*>>>()
 
     fun addMessage(msg: ChatMessage<*>) {
-        _messages.add(msg)
+        with(_messages[msg.id]) {
+            // IDEA的静态检测有问题,这么写只是为了绕过静态检测,实际上 this == null 就可以了
+            if (this.isNullOrEmpty()) {
+                _messages[msg.id] = mutableStateListOf(msg)
+            } else {
+                this.add(msg)
+            }
+        }
+    }
+
+    operator fun get(id: Long): SnapshotStateList<ChatMessage<*>> {
+        return _messages[id] ?: mutableStateListOf()
+    }
+
+    fun addAll(messages: List<ChatMessage<BaseMessage>>) {
+        for (message in messages) {
+            addMessage(message)
+        }
     }
 }
 
 @Composable
 fun MessageScreen(channel: Channel, user: Account, onDismiss: () -> Unit) {
     val scope = rememberCoroutineScope()
-    val model = viewModel { MessageViewModel() }
 
     LaunchedEffect(Unit) {
-        QMessenger.websocket()?.let {
-            runCatching {
-                for (wsMessage in it.incoming) {
-                    when (wsMessage) {
-                        is Frame.Text -> {
-                            val response: WebsocketResponse<JsonObject> =
-                                JSON.decodeFromString(wsMessage.readText())
-                            if (response.method == WebsocketResponse.NEW_MESSAGE) {
-                                val msg: ChatMessage<BaseMessage> =
-                                    JSON.decodeFromJsonElement(response.data!!)
-                                if (msg.sender.id != user.id) {
-                                    pushNotification(
-                                        msg.channel.title ?: msg.channel.name, msg.shortContent
-                                    )
-                                }
-                                if (channel.id == msg.channel.id) {
-                                    model.addMessage(msg)
-                                }
+        // 存在连接就不会做任何事情,不存在则开启连接
+        QMessenger.websocket(user, channel)?.let {
+            for (wsMessage in it.incoming) {
+                when (wsMessage) {
+                    is Frame.Text -> {
+                        val response: WebsocketResponse<JsonObject> =
+                            JSON.decodeFromString(wsMessage.readText())
+                        if (response.method == WebsocketResponse.NEW_MESSAGE) {
+                            val msg: ChatMessage<BaseMessage> =
+                                JSON.decodeFromJsonElement(response.data!!)
+                            if (msg.sender.id != user.id) {
+                                pushNotification(
+                                    msg.channel.title ?: msg.channel.name, msg.shortContent
+                                )
                             }
+                            store.send(
+                                Action.SendMessage(
+                                    msg
+                                )
+                            )
                         }
+                    }
 
-                        else -> {
-                            // unknown type
-                        }
+                    else -> {
+                        // unknown type
                     }
                 }
             }
         }
     }
+
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().align(Alignment.Center)) {
             Box(modifier = Modifier.fillMaxWidth()) {
@@ -397,7 +409,7 @@ fun MessageScreen(channel: Channel, user: Account, onDismiss: () -> Unit) {
                 }
             }
             HorizontalDivider()
-            Conversation(user = user, channel = channel, model = model)
+            Conversation(user = user, channel = channel)
         }
         ChatBox(modifier = Modifier.align(Alignment.BottomStart).padding(10.dp),
             sendMessage = {
@@ -412,27 +424,32 @@ fun MessageScreen(channel: Channel, user: Account, onDismiss: () -> Unit) {
     }
 }
 
+val store = CoroutineScope(SupervisorJob()).createStore()
+
 @Composable
-fun Conversation(modifier: Modifier = Modifier, user: Account, channel: Channel, model: MessageViewModel) {
+fun Conversation(modifier: Modifier = Modifier, user: Account, channel: Channel) {
     val scope = rememberCoroutineScope()
-    val messages = model.messages
-    if (messages.isEmpty() || channel.id != messages[0].channel.id) {
+    val state by store.stateFlow.collectAsState()
+    if (state.messages.isEmpty() || state.messages.last().channel.id != channel.id) {
         scope.launch {
             QMessenger.messages(channel, 0).let {
                 if (it.isSuccess) {
                     val res = it.getOrThrow()
                     if (res.code == 200) {
-                        messages.clear()
-                        messages.addAll(res.data!!.reversed())
+                        for (msg in res.data!!.reversed()) {
+                            if (!state.messages.contains(msg)) {
+                                store.send(Action.SendMessage(msg))
+                            }
+                        }
                     }
                 }
             }
         }
     }
     val listState = rememberLazyListState()
-    if (messages.isNotEmpty()) {
-        LaunchedEffect(messages.last()) {
-            listState.animateScrollToItem(messages.lastIndex, scrollOffset = 2)
+    if (state.messages.isNotEmpty()) {
+        LaunchedEffect(state.messages.last()) {
+            listState.animateScrollToItem(state.messages.lastIndex, scrollOffset = 2)
         }
     }
     LazyColumn(
@@ -441,8 +458,8 @@ fun Conversation(modifier: Modifier = Modifier, user: Account, channel: Channel,
         state = listState,
     ) {
         item { Spacer(Modifier.size(20.dp)) }
-        items(messages, key = { it.id }) {
-            ChatMessage(isMyMessage = it.sender.id == user.id, it)
+        items(state.messages.filter { it.channel.id == channel.id }, key = { it.id }) {
+            ChatMessage(isMyMessage = it.sender.id == user.id, message = it)
         }
         item {
             Box(Modifier.height(70.dp))

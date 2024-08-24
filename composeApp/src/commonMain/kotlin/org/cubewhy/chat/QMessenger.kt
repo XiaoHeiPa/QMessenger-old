@@ -15,9 +15,12 @@ import io.ktor.http.headers
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
+import io.ktor.websocket.readText
 import io.ktor.websocket.send
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.decodeFromJsonElement
 import kotlin.time.Duration.Companion.seconds
 
 val client = getHttpClient {
@@ -34,6 +37,8 @@ val client = getHttpClient {
 }
 
 object QMessenger {
+    lateinit var model: MessageViewModel
+    private var channel: Channel? = null
     private var session: DefaultClientWebSocketSession? = null
 
     suspend fun check() = runCatching {
@@ -58,8 +63,11 @@ object QMessenger {
         response
     }
 
-    suspend fun websocket(): WebSocketSession? {
-        if (session == null || session?.isActive == false) {
+    suspend fun websocket(user: Account, channel: Channel): WebSocketSession? {
+        if (this.channel == null || channel.id != this.channel?.id) {
+            this.channel = channel
+        }
+        if (session == null) {
             session = runCatching {
                 client.webSocketSession(config.websocket) {
                     header("Authorization", "Bearer ${config.user!!.token}")
@@ -100,7 +108,7 @@ object QMessenger {
             contentType = MessageType.TEXT,
             content = BaseMessage(data = text)
         )
-        this.websocket()!!.send(
+        this.websocket(user, channel)!!.send(
             JSON.encodeToString(
                 WebsocketRequest.serializer(ChatMessageDTO.serializer(BaseMessage.serializer())),
                 WebsocketRequest(WebsocketRequest.SEND_MESSAGE, message)

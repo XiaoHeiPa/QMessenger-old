@@ -174,9 +174,9 @@ fun generateColorFromStringLength(username: String): Long {
 
     // 使用种子值生成随机颜色
     val random = Random(seed)
-    val red = random.nextInt(200) + 25
-    val green = random.nextInt(200) + 25
-    val blue = random.nextInt(200) + 25
+    val red = random.nextInt(255)
+    val green = random.nextInt(255)
+    val blue = random.nextInt(255)
 
     // 将RGB颜色转换为整数形式
     return ((red shl 16) or (green shl 8) or blue).toLong()
