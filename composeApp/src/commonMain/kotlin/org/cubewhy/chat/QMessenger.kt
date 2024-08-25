@@ -44,8 +44,10 @@ object QMessenger {
 
     suspend fun login(username: String, password: String) = runCatching {
         val response: RestBean<Authorize> =
-            client.post("${config.api}/api/user/login?username=$username&password=$password")
-                .body()
+            client.post("${config.api}/api/user/login") {
+                contentType(ContentType.parse("application/x-www-form-urlencoded"))
+                setBody("username=$username&password=$password")
+            }.body()
         response
     }
 
@@ -154,13 +156,14 @@ object QMessenger {
     }
 
     suspend fun updateChannelDescription(channel: Channel, description: String) = runCatching {
-        val response: RestBean<UpdateChannelDescription> = client.post("${config.api}/api/channel/${channel.id}/description") {
-            header("Authorization", "Bearer ${config.user!!.token}")
-            contentType(ContentType.parse("application/json"))
-            setBody(
-                UpdateChannelDescription(description)
-            )
-        }.body()
+        val response: RestBean<UpdateChannelDescription> =
+            client.post("${config.api}/api/channel/${channel.id}/description") {
+                header("Authorization", "Bearer ${config.user!!.token}")
+                contentType(ContentType.parse("application/json"))
+                setBody(
+                    UpdateChannelDescription(description)
+                )
+            }.body()
         response
     }
 
