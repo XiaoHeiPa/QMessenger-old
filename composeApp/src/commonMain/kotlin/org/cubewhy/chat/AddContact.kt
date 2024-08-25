@@ -45,9 +45,11 @@ import qmessenger.composeapp.generated.resources.channel_invite_code
 import qmessenger.composeapp.generated.resources.channel_name
 import qmessenger.composeapp.generated.resources.channel_title
 import qmessenger.composeapp.generated.resources.create_channel
+import qmessenger.composeapp.generated.resources.create_channel_title
 import qmessenger.composeapp.generated.resources.decentralized_channel
 import qmessenger.composeapp.generated.resources.internal_error
 import qmessenger.composeapp.generated.resources.join_channel
+import qmessenger.composeapp.generated.resources.join_channel_title
 import qmessenger.composeapp.generated.resources.public_channel
 import qmessenger.composeapp.generated.resources.switch_to_create_channel
 import qmessenger.composeapp.generated.resources.switch_to_join_channel
@@ -77,7 +79,7 @@ fun AddContact(modifier: Modifier = Modifier, onSuccess: () -> Unit) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = if (isCreatingChannel) "Create a Channel" else "Join a Channel",
+            text = stringResource(if (isCreatingChannel) Res.string.create_channel_title else Res.string.join_channel_title),
             style = MaterialTheme.typography.headlineMedium
         )
 
