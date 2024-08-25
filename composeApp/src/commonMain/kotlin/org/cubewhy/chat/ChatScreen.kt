@@ -270,6 +270,7 @@ fun ChatScreen(nav: NavController, navToChat: (Channel, Account) -> Unit) {
                     } else {
                         MessageScreen(it, user!!, nav) {
                             currentChannel = null
+                            action = null
                         }
                     }
                 }
@@ -305,7 +306,8 @@ fun ChatScreen(nav: NavController, navToChat: (Channel, Account) -> Unit) {
 
         }
         AnimatedVisibility(
-            visible = action == null, enter = slideInVertically(initialOffsetY = { it }) + fadeIn(
+            visible = action == null,
+            enter = slideInVertically(initialOffsetY = { it }) + fadeIn(
                 animationSpec = tween(
                     durationMillis = 300
                 )
