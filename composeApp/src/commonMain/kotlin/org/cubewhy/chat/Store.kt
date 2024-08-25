@@ -9,6 +9,8 @@ import kotlinx.coroutines.launch
 
 interface Store {
     fun send(action: Action)
+    fun removeAll()
+
     val stateFlow: StateFlow<State>
     val state get() = stateFlow.value
 }
@@ -30,6 +32,10 @@ fun CoroutineScope.createStore(): Store {
             launch {
                 channel.send(action)
             }
+        }
+
+        override fun removeAll() {
+            mutableStateFlow.value = mutableStateFlow.value.copy(messages = emptyList())
         }
 
         override val stateFlow: StateFlow<State> = mutableStateFlow

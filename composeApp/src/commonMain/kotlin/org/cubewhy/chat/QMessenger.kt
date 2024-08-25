@@ -153,6 +153,16 @@ object QMessenger {
             }.body()
         response
     }
+
+    suspend fun updateChannelNickname(channelId: Long, text: String) = runCatching {
+        val response: RestBean<UpdateChannelNickname> =
+            client.post("${config.api}/api/channel/$channelId/nickname") {
+                header("Authorization", "Bearer ${config.user!!.token}")
+                contentType(ContentType.parse("application/json"))
+                setBody(UpdateChannelNickname(nickname = text))
+            }.body()
+        response
+    }
 }
 
 expect fun pushNotification(title: String, body: String): Unit

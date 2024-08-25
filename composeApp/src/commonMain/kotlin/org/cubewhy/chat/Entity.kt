@@ -220,3 +220,7 @@ data class ChannelConfInfo(
     val permissions: Set<Permission>
 )
 
+@Serializable
+data class UpdateChannelNickname(
+    val nickname: String
+)

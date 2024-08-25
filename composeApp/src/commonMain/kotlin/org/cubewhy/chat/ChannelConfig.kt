@@ -57,7 +57,10 @@ fun ChannelConfig(nav: NavController, id: Long) {
 
     channelConf?.let {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = stringResource(Res.string.channel_config), style = MaterialTheme.typography.headlineMedium)
+            Text(
+                text = stringResource(Res.string.channel_config),
+                style = MaterialTheme.typography.headlineMedium
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -75,9 +78,20 @@ fun ChannelConfig(nav: NavController, id: Long) {
                     // Handle nickname update
                     scope.launch {
                         try {
-//                            QMessenger.updateChannelNickname(id, nickname.text)
-                            channelConf?.nickname = nickname.text
-                            isEditing = false
+                            QMessenger.updateChannelNickname(id, nickname.text).let {
+                                if (it.isSuccess) {
+                                    val response = it.getOrThrow()
+                                    if (response.code == 200) {
+                                        channelConf?.nickname = response.data!!.nickname
+                                        isEditing = false
+                                        store.removeAll()
+                                    } else {
+                                        errorMessage = response.message
+                                    }
+                                } else {
+                                    throw it.exceptionOrNull()!!
+                                }
+                            }
                         } catch (e: Exception) {
                             errorMessage = "Failed to update nickname: ${e.message}"
                         }
