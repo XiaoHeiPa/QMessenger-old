@@ -36,4 +36,11 @@
     <string name="public_channel">Public Channel</string>
     <string name="add_contact_tip">There is no concept of friends in QMessenger. All conversations are called channels.</string>
     <string name="no_network">No network connection (*server*)</string>
+    <string name="channel_config">Channel Configuration</string>
+    <string name="edit_channel_info">Edit channel</string>
+    <string name="channel_nickname">Nickname</string>
+    <string name="edit_channel_nickname">Edit nickname</string>
+    <string name="save">Save</string>
+    <string name="leave_channel">Leave channel</string>
+    <string name="channel_config_loading">Loading channel settings (if stuck here, it means there is a problem with your network)</string>
 </resources>

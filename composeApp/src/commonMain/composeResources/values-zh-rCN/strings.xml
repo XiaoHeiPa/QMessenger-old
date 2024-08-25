@@ -36,4 +36,11 @@
     <string name="public_channel">公共频道</string>
     <string name="add_contact_tip">QMessenger中没有好友的概念,所有会话都叫做频道</string>
     <string name="no_network">没有网络连接 (*server*)</string>
+    <string name="channel_config">频道设置</string>
+    <string name="channel_nickname">频道中的昵称</string>
+    <string name="edit_channel_info">编辑频道</string>
+    <string name="edit_channel_nickname">编辑昵称</string>
+    <string name="save">保存</string>
+    <string name="leave_channel">离开频道</string>
+    <string name="channel_config_loading">正在加载频道设置(卡在这里说明你网络有问题)</string>
 </resources>

@@ -16,10 +16,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
+import qmessenger.composeapp.generated.resources.Res
+import qmessenger.composeapp.generated.resources.channel_config
+import qmessenger.composeapp.generated.resources.channel_config_loading
+import qmessenger.composeapp.generated.resources.channel_nickname
+import qmessenger.composeapp.generated.resources.edit_channel_info
+import qmessenger.composeapp.generated.resources.edit_channel_nickname
+import qmessenger.composeapp.generated.resources.leave_channel
+import qmessenger.composeapp.generated.resources.save
 
 @Composable
 fun ChannelConfig(nav: NavController, id: Long) {
@@ -45,13 +55,13 @@ fun ChannelConfig(nav: NavController, id: Long) {
 
     }
 
-    channelConf?.let { conf ->
+    channelConf?.let {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Channel Configuration", style = MaterialTheme.typography.headlineMedium)
+            Text(text = stringResource(Res.string.channel_config), style = MaterialTheme.typography.headlineMedium)
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text("Nickname:")
+            Text(stringResource(Res.string.channel_nickname))
             TextField(
                 value = nickname,
                 onValueChange = { nickname = it },
@@ -76,7 +86,7 @@ fun ChannelConfig(nav: NavController, id: Long) {
                     isEditing = true
                 }
             }) {
-                Text(if (isEditing) "Save" else "Edit Nickname")
+                Text(stringResource(if (isEditing) Res.string.save else Res.string.edit_channel_nickname))
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -86,7 +96,7 @@ fun ChannelConfig(nav: NavController, id: Long) {
                     // Handle group info update
                     // Example: navigate to another screen to edit channel info
                 }) {
-                    Text("Edit Channel Info")
+                    Text(stringResource(Res.string.edit_channel_info))
                 }
             }
 
@@ -103,7 +113,10 @@ fun ChannelConfig(nav: NavController, id: Long) {
                     }
                 }
             }) {
-                Text("Leave Channel")
+                Text(
+                    color = Color.Red,
+                    text = stringResource(Res.string.leave_channel)
+                )
             }
 
             errorMessage?.let {
@@ -113,6 +126,6 @@ fun ChannelConfig(nav: NavController, id: Long) {
         }
     } ?: run {
         // Loading or error state
-        Text("Loading channel information...")
+        Text(stringResource(Res.string.channel_config_loading))
     }
 }
