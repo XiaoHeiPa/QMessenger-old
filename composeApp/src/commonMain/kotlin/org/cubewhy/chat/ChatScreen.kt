@@ -2,6 +2,7 @@ package org.cubewhy.chat
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -66,6 +68,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -158,10 +161,12 @@ fun ChatScreen(nav: NavController, navToChat: (Channel, Account) -> Unit) {
                     }
                     AnimatedVisibility(!fold) {
                         Column {
-                            debugInfo?.serverName?.let { Text(
-                                text = it,
-                                style = MaterialTheme.typography.titleMedium
-                            ) }
+                            debugInfo?.serverName?.let {
+                                Text(
+                                    text = it,
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                            }
                         }
                     }
                 }
@@ -318,7 +323,19 @@ fun ChatScreen(nav: NavController, navToChat: (Channel, Account) -> Unit) {
                 )
             )
         ) {
-            Box(modifier = Modifier.fillMaxSize()) {
+            var expanded by remember { mutableStateOf(false) }
+            Box(modifier = Modifier.fillMaxSize().animateContentSize()) {
+                debugInfo?.let {
+                    if (it.motd != null) {
+                        Text(
+                            text = if (expanded) it.motd.title + "\n" + it.motd.text else it.motd.title,
+                            modifier = Modifier
+                                .padding(5.dp)
+                                .align(Alignment.TopCenter)
+                                .clickable { expanded = !expanded }
+                        )
+                    }
+                }
                 Text(
                     modifier = Modifier.align(Alignment.Center),
                     text = stringResource(Res.string.channel_tip)
