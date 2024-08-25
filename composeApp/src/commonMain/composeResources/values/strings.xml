@@ -40,7 +40,9 @@
     <string name="edit_channel_info">Edit channel</string>
     <string name="channel_nickname">Nickname</string>
     <string name="edit_channel_nickname">Edit nickname</string>
+    <string name="edit_channel_description">Edit description</string>
     <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
     <string name="leave_channel">Leave channel</string>
     <string name="channel_config_loading">Loading channel settings (if stuck here, it means there is a problem with your network)</string>
 </resources>

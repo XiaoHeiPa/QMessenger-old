@@ -68,6 +68,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import coil3.ImageLoader
 import coil3.compose.AsyncImage
@@ -399,6 +400,7 @@ private fun loadChannels(
 @Composable
 fun MessageScreen(channel: Channel, user: Account, nav: NavController, onDismiss: () -> Unit) {
     val scope = rememberCoroutineScope()
+    var channelConfigDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         // 存在连接就不会做任何事情,不存在则开启连接
@@ -432,9 +434,17 @@ fun MessageScreen(channel: Channel, user: Account, nav: NavController, onDismiss
                     }
                 }
 
+                if (channelConfigDialog) {
+                    Dialog(
+                        onDismissRequest = { channelConfigDialog = false }
+                    ) {
+                        ChannelConfig(channel)
+                    }
+                }
+
                 Column(modifier = Modifier.align(Alignment.TopEnd).padding(10.dp)) {
                     IconButton(onClick = {
-                        nav.navigate(Screen.CHANNEL_CONFIG + channel.id)
+                        channelConfigDialog = true
                     }) {
                         Icon(
                             imageVector = Icons.Filled.Settings,

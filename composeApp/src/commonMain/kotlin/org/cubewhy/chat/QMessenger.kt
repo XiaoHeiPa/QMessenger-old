@@ -96,7 +96,14 @@ object QMessenger {
         val message = ChatMessageDTO(
             channel = channel.id,
             shortContent = "${user.nickname}: $preview",
-            content = listOf(JSON.encodeToJsonElement(TextMessage(data = text, type = MessageType.TEXT)))
+            content = listOf(
+                JSON.encodeToJsonElement(
+                    TextMessage(
+                        data = text,
+                        type = MessageType.TEXT
+                    )
+                )
+            )
         )
         // TODO parse links
         this.websocket(user, channel)!!.send(
@@ -110,6 +117,14 @@ object QMessenger {
     suspend fun channelConf(id: Long) = runCatching {
         val response: RestBean<ChannelConfInfo> =
             client.get("${config.api}/api/channel/${id}/myInfo") {
+                header("Authorization", "Bearer ${config.user!!.token}")
+            }.body()
+        response
+    }
+
+    suspend fun channelInfo(id: Long) = runCatching {
+        val response: RestBean<Channel> =
+            client.get("${config.api}/api/channel/${id}/info") {
                 header("Authorization", "Bearer ${config.user!!.token}")
             }.body()
         response
@@ -133,6 +148,17 @@ object QMessenger {
                     publicChannel = isPublic,
                     decentralized = decentralized
                 )
+            )
+        }.body()
+        response
+    }
+
+    suspend fun updateChannelDescription(channel: Channel, description: String) = runCatching {
+        val response: RestBean<UpdateChannelDescription> = client.post("${config.api}/api/channel/${channel.id}/description") {
+            header("Authorization", "Bearer ${config.user!!.token}")
+            contentType(ContentType.parse("application/json"))
+            setBody(
+                UpdateChannelDescription(description)
             )
         }.body()
         response

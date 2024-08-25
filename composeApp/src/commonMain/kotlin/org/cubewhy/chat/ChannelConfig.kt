@@ -1,10 +1,26 @@
 package org.cubewhy.chat
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.RemoveModerator
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -16,32 +32,38 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
+import coil3.ImageLoader
+import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
+import coil3.request.CachePolicy
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import qmessenger.composeapp.generated.resources.Res
-import qmessenger.composeapp.generated.resources.channel_config
-import qmessenger.composeapp.generated.resources.channel_config_loading
-import qmessenger.composeapp.generated.resources.channel_nickname
-import qmessenger.composeapp.generated.resources.edit_channel_info
-import qmessenger.composeapp.generated.resources.edit_channel_nickname
-import qmessenger.composeapp.generated.resources.leave_channel
+import qmessenger.composeapp.generated.resources.cancel
+import qmessenger.composeapp.generated.resources.decentralized_channel
+import qmessenger.composeapp.generated.resources.edit_channel_description
+import qmessenger.composeapp.generated.resources.internal_error
+import qmessenger.composeapp.generated.resources.member_count
 import qmessenger.composeapp.generated.resources.save
 
 @Composable
-fun ChannelConfig(nav: NavController, id: Long) {
+fun ChannelConfig(channel: Channel) {
     val scope = rememberCoroutineScope()
     var channelConf by remember { mutableStateOf<ChannelConfInfo?>(null) }
     var nickname by remember { mutableStateOf(TextFieldValue("")) }
-    var isEditing by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val scrollState = rememberScrollState()
+    val imageLoader =
+        ImageLoader.Builder(LocalPlatformContext.current).diskCachePolicy(CachePolicy.DISABLED)
+            .memoryCachePolicy(CachePolicy.ENABLED).build()
 
-    LaunchedEffect(id) {
+    LaunchedEffect(channel) {
         // Fetch channel configuration
-        val conf = QMessenger.channelConf(id)
+        val conf = QMessenger.channelConf(channel.id)
         conf.let {
             if (it.isSuccess) {
                 val response = it.getOrThrow()
@@ -52,94 +74,161 @@ fun ChannelConfig(nav: NavController, id: Long) {
                 }
             }
         }
-
     }
 
-    channelConf?.let {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = stringResource(Res.string.channel_config),
-                style = MaterialTheme.typography.headlineMedium
+    Column(modifier = Modifier.verticalScroll(scrollState)) {
+        Row {
+            AsyncImage(
+                modifier = Modifier.size(65.dp, 65.dp).clip(CircleShape),
+                model = "${config.api}/api/avatar/image/${channel.name}",
+                contentDescription = "Avatar of channel ${channel.name}",
+                imageLoader = imageLoader
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(stringResource(Res.string.channel_nickname))
-            TextField(
-                value = nickname,
-                onValueChange = { nickname = it },
-                enabled = isEditing
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(onClick = {
-                if (isEditing) {
-                    // Handle nickname update
-                    scope.launch {
-                        try {
-                            QMessenger.updateChannelNickname(id, nickname.text).let {
-                                if (it.isSuccess) {
-                                    val response = it.getOrThrow()
-                                    if (response.code == 200) {
-                                        channelConf?.nickname = response.data!!.nickname
-                                        isEditing = false
-                                        store.removeAll()
-                                    } else {
-                                        errorMessage = response.message
-                                    }
-                                } else {
-                                    throw it.exceptionOrNull()!!
-                                }
-                            }
-                        } catch (e: Exception) {
-                            errorMessage = "Failed to update nickname: ${e.message}"
-                        }
-                    }
-                } else {
-                    isEditing = true
-                }
-            }) {
-                Text(stringResource(if (isEditing) Res.string.save else Res.string.edit_channel_nickname))
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            if (channelConf?.permissions?.contains(Permission.MANAGE_CHANNEL) == true) {
-                Button(onClick = {
-                    // Handle group info update
-                    // Example: navigate to another screen to edit channel info
-                }) {
-                    Text(stringResource(Res.string.edit_channel_info))
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(onClick = {
-                // Handle leave channel
-                scope.launch {
-                    try {
-//                        QMessenger.leaveChannel(id)
-                        nav.popBackStack() // Go back after leaving the channel
-                    } catch (e: Exception) {
-                        errorMessage = "Failed to leave channel: ${e.message}"
-                    }
-                }
-            }) {
+            Column(modifier = Modifier.padding(10.dp)) {
+                Text(text = channel.title ?: channel.name)
                 Text(
-                    color = Color.Red,
-                    text = stringResource(Res.string.leave_channel)
+                    text = stringResource(Res.string.member_count).replace(
+                        "*count*",
+                        channel.memberCount.toString()
+                    ), color = MaterialTheme.colorScheme.onBackground.copy(0.5f)
                 )
             }
+        }
 
-            errorMessage?.let {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(it, color = MaterialTheme.colorScheme.error)
+        Row {
+            AssistChip(
+                onClick = {
+
+                },
+                label = { Text(if (channel.publicChannel) "Public" else "Private") },
+                leadingIcon = {
+                    Icon(
+                        if (channel.publicChannel) Icons.Filled.Public else Icons.Filled.Lock,
+                        contentDescription = "Channel visible",
+                        Modifier.size(AssistChipDefaults.IconSize)
+                    )
+                }
+            )
+
+            Spacer(modifier = Modifier.padding(5.dp))
+
+            if (channel.decentralized) {
+                AssistChip(
+                    onClick = {
+
+                    },
+                    label = { Text(stringResource(Res.string.decentralized_channel)) },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Filled.RemoveModerator,
+                            contentDescription = "Channel visible",
+                            Modifier.size(AssistChipDefaults.IconSize)
+                        )
+                    }
+                )
             }
         }
-    } ?: run {
-        // Loading or error state
-        Text(stringResource(Res.string.channel_config_loading))
+
+        var editDescriptionDialog by remember { mutableStateOf(false) }
+
+        SelectionContainer {
+            val wrappedText = buildString {
+                channel.description.chunked(50).forEach { chunk ->
+                    append(chunk)
+                    append('\n') // Insert a newline character
+                }
+            }
+            Text(
+                text = wrappedText,
+                modifier = Modifier.clickable {
+                    if (channelConf?.permissions?.contains(Permission.MANAGE_CHANNEL) == true) {
+                        editDescriptionDialog = true
+                    }
+                }
+            )
+        }
+
+        if (editDescriptionDialog) {
+            EditDescriptionDialog(channel) { newDescription ->
+                channel.description = newDescription!!
+                editDescriptionDialog = false
+            }
+        }
+
+
+        if (channel.description.isBlank() && channelConf?.permissions?.contains(Permission.MANAGE_CHANNEL) == true) {
+            Button(
+                onClick = {
+                    editDescriptionDialog = true
+                }
+            ) {
+                Text(stringResource(Res.string.edit_channel_description))
+            }
+        }
     }
+}
+
+@Composable
+fun EditDescriptionDialog(channel: Channel, onDismissRequest: (String?) -> Unit) {
+    var description by remember { mutableStateOf(channel.description) }
+    val scope = rememberCoroutineScope()
+    var error by remember { mutableStateOf("") }
+
+    // Dialog content
+    AlertDialog(
+        onDismissRequest = { onDismissRequest(null) },
+        title = { Text(text = "Edit Channel Description") },
+        text = {
+            Column {
+                Text(
+                    text = "Enter the new description for the channel:",
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                TextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    placeholder = { Text(text = "Enter description") },
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 3,
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        keyboardType = KeyboardType.Text
+                    )
+                )
+                if (error.isNotEmpty()) {
+                    Text(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    scope.launch {
+                        QMessenger.updateChannelDescription(channel, description).let {
+                            if (it.isSuccess) {
+                                val response = it.getOrThrow()
+                                if (response.code == 200) {
+                                    onDismissRequest(response.data!!.description)
+                                } else {
+                                    error = response.message
+                                }
+                            } else {
+                                error = getString(Res.string.internal_error)
+                            }
+                        }
+                    }
+                }
+            ) {
+                Text(stringResource(Res.string.save))
+            }
+        },
+        dismissButton = {
+            Button(onClick = { onDismissRequest(null) }) {
+                Text(stringResource(Res.string.cancel))
+            }
+        }
+    )
 }

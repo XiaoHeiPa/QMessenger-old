@@ -41,6 +41,8 @@
     <string name="edit_channel_info">编辑频道</string>
     <string name="edit_channel_nickname">编辑昵称</string>
     <string name="save">保存</string>
+    <string name="cancel">取消</string>
+    <string name="edit_channel_description">编辑介绍</string>
     <string name="leave_channel">离开频道</string>
     <string name="channel_config_loading">正在加载频道设置(卡在这里说明你网络有问题)</string>
 </resources>

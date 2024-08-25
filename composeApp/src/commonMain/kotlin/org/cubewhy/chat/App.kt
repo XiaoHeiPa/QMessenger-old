@@ -160,11 +160,6 @@ fun App() {
                             navController.popBackStack()
                         }
                     }
-
-                    composable(route = Screen.CHANNEL_CONFIG + "{id}") { backStackEntry ->
-                        val id = backStackEntry.arguments?.getString("id")
-                        ChannelConfig(navController, id!!.toLong())
-                    }
                 }
             }
         }

@@ -135,7 +135,7 @@ data class Channel(
 
     val name: String,
     val title: String?,
-    val description: String,
+    var description: String,
 
     val iconHash: String? = null,
     val publicChannel: Boolean,
@@ -223,4 +223,9 @@ data class ChannelConfInfo(
 @Serializable
 data class UpdateChannelNickname(
     val nickname: String
+)
+
+@Serializable
+data class UpdateChannelDescription(
+    val description: String
 )
