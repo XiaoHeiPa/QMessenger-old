@@ -134,11 +134,11 @@ data class Channel(
     val id: Long,
 
     val name: String,
-    val title: String?,
+    var title: String?,
     var description: String,
 
     val iconHash: String? = null,
-    val publicChannel: Boolean,
+    var publicChannel: Boolean,
     val decentralized: Boolean,
 
     val createdAt: Long,
@@ -228,4 +228,14 @@ data class UpdateChannelNickname(
 @Serializable
 data class UpdateChannelDescription(
     val description: String
+)
+
+@Serializable
+data class UpdateChannelVisible(
+    val visible: Boolean
+)
+
+@Serializable
+data class UpdateChannelTitle(
+    val title: String
 )

@@ -76,6 +76,9 @@ fun ChannelConfig(channel: Channel) {
         }
     }
 
+    var editDescriptionDialog by remember { mutableStateOf(false) }
+    var editTitleDialog by remember { mutableStateOf(false) }
+
     Column(modifier = Modifier.verticalScroll(scrollState)) {
         Row {
             AsyncImage(
@@ -86,7 +89,12 @@ fun ChannelConfig(channel: Channel) {
             )
 
             Column(modifier = Modifier.padding(10.dp)) {
-                Text(text = channel.title ?: channel.name)
+                Text(
+                    modifier = Modifier.clickable {
+                        editTitleDialog = true
+                    },
+                    text = channel.title ?: channel.name
+                )
                 Text(
                     text = stringResource(Res.string.member_count).replace(
                         "*count*",
@@ -97,14 +105,26 @@ fun ChannelConfig(channel: Channel) {
         }
 
         Row {
+            var visible by remember { mutableStateOf(channel.publicChannel) }
             AssistChip(
                 onClick = {
-
+                    scope.launch {
+                        QMessenger.updateChannelVisible(channel.id, !channel.publicChannel).let {
+                            if (it.isSuccess) {
+                                val response = it.getOrThrow()
+                                if (response.code == 200) {
+                                    val state = response.data!!.visible
+                                    channel.publicChannel = state
+                                    visible = state
+                                }
+                            }
+                        }
+                    }
                 },
-                label = { Text(if (channel.publicChannel) "Public" else "Private") },
+                label = { Text(if (visible) "Public" else "Private") },
                 leadingIcon = {
                     Icon(
-                        if (channel.publicChannel) Icons.Filled.Public else Icons.Filled.Lock,
+                        if (visible) Icons.Filled.Public else Icons.Filled.Lock,
                         contentDescription = "Channel visible",
                         Modifier.size(AssistChipDefaults.IconSize)
                     )
@@ -116,21 +136,18 @@ fun ChannelConfig(channel: Channel) {
             if (channel.decentralized) {
                 AssistChip(
                     onClick = {
-
                     },
                     label = { Text(stringResource(Res.string.decentralized_channel)) },
                     leadingIcon = {
                         Icon(
                             Icons.Filled.RemoveModerator,
-                            contentDescription = "Channel visible",
+                            contentDescription = "Decentralized",
                             Modifier.size(AssistChipDefaults.IconSize)
                         )
                     }
                 )
             }
         }
-
-        var editDescriptionDialog by remember { mutableStateOf(false) }
 
         SelectionContainer {
             val wrappedText = buildString {
@@ -151,8 +168,19 @@ fun ChannelConfig(channel: Channel) {
 
         if (editDescriptionDialog) {
             EditDescriptionDialog(channel) { newDescription ->
-                channel.description = newDescription!!
+                newDescription?.let {
+                    channel.description = it
+                }
                 editDescriptionDialog = false
+            }
+        }
+
+        if (editTitleDialog) {
+            EditTitleDialog(channel) { newTitle ->
+                newTitle?.let {
+                    channel.title = it
+                }
+                editTitleDialog = false
             }
         }
 
@@ -212,6 +240,71 @@ fun EditDescriptionDialog(channel: Channel, onDismissRequest: (String?) -> Unit)
                                 val response = it.getOrThrow()
                                 if (response.code == 200) {
                                     onDismissRequest(response.data!!.description)
+                                } else {
+                                    error = response.message
+                                }
+                            } else {
+                                error = getString(Res.string.internal_error)
+                            }
+                        }
+                    }
+                }
+            ) {
+                Text(stringResource(Res.string.save))
+            }
+        },
+        dismissButton = {
+            Button(onClick = { onDismissRequest(null) }) {
+                Text(stringResource(Res.string.cancel))
+            }
+        }
+    )
+}
+
+@Composable
+fun EditTitleDialog(channel: Channel, onDismissRequest: (String?) -> Unit) {
+    var title by remember { mutableStateOf(channel.title?: channel.name) }
+    val scope = rememberCoroutineScope()
+    var error by remember { mutableStateOf("") }
+
+    // Dialog content
+    AlertDialog(
+        onDismissRequest = { onDismissRequest(null) },
+        title = { Text(text = "Edit Channel title") },
+        text = {
+            Column {
+                Text(
+                    text = "Enter the new title for the channel:",
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                TextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    placeholder = { Text(text = "Enter title") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    maxLines = 3,
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        keyboardType = KeyboardType.Text
+                    )
+                )
+                if (error.isNotEmpty()) {
+                    Text(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    scope.launch {
+                        QMessenger.updateChannelTitle(channel.id, title).let {
+                            if (it.isSuccess) {
+                                val response = it.getOrThrow()
+                                if (response.code == 200) {
+                                    onDismissRequest(response.data!!.title)
                                 } else {
                                     error = response.message
                                 }

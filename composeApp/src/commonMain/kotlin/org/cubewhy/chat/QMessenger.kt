@@ -189,6 +189,26 @@ object QMessenger {
             }.body()
         response
     }
+
+    suspend fun updateChannelVisible(channelId: Long, state: Boolean) = runCatching {
+        val response: RestBean<UpdateChannelVisible> =
+            client.post("${config.api}/api/channel/$channelId/visible") {
+                header("Authorization", "Bearer ${config.user!!.token}")
+                contentType(ContentType.parse("application/json"))
+                setBody(UpdateChannelVisible(visible = state))
+            }.body()
+        response
+    }
+
+    suspend fun updateChannelTitle(channelId: Long, title: String) = runCatching {
+        val response: RestBean<UpdateChannelTitle> =
+            client.post("${config.api}/api/channel/$channelId/title") {
+                header("Authorization", "Bearer ${config.user!!.token}")
+                contentType(ContentType.parse("application/json"))
+                setBody(UpdateChannelTitle(title = title))
+            }.body()
+        response
+    }
 }
 
 expect fun pushNotification(title: String, body: String): Unit
