@@ -47,6 +47,11 @@ import qmessenger.composeapp.generated.resources.Res
 import qmessenger.composeapp.generated.resources.cancel
 import qmessenger.composeapp.generated.resources.decentralized_channel
 import qmessenger.composeapp.generated.resources.edit_channel_description
+import qmessenger.composeapp.generated.resources.edit_channel_description_placeholder
+import qmessenger.composeapp.generated.resources.edit_channel_description_title
+import qmessenger.composeapp.generated.resources.edit_channel_title
+import qmessenger.composeapp.generated.resources.edit_channel_title_placeholder
+import qmessenger.composeapp.generated.resources.edit_channel_title_title
 import qmessenger.composeapp.generated.resources.internal_error
 import qmessenger.composeapp.generated.resources.member_count
 import qmessenger.composeapp.generated.resources.save
@@ -206,17 +211,17 @@ fun EditDescriptionDialog(channel: Channel, onDismissRequest: (String?) -> Unit)
     // Dialog content
     AlertDialog(
         onDismissRequest = { onDismissRequest(null) },
-        title = { Text(text = "Edit Channel Description") },
+        title = { Text(text = stringResource(Res.string.edit_channel_description)) },
         text = {
             Column {
                 Text(
-                    text = "Enter the new description for the channel:",
+                    text = stringResource(Res.string.edit_channel_description_title),
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
                 TextField(
                     value = description,
                     onValueChange = { description = it },
-                    placeholder = { Text(text = "Enter description") },
+                    placeholder = { Text(text = stringResource(Res.string.edit_channel_description_placeholder)) },
                     modifier = Modifier.fillMaxWidth(),
                     maxLines = 3,
                     keyboardOptions = KeyboardOptions.Default.copy(
@@ -270,17 +275,17 @@ fun EditTitleDialog(channel: Channel, onDismissRequest: (String?) -> Unit) {
     // Dialog content
     AlertDialog(
         onDismissRequest = { onDismissRequest(null) },
-        title = { Text(text = "Edit Channel title") },
+        title = { Text(text = stringResource(Res.string.edit_channel_title)) },
         text = {
             Column {
                 Text(
-                    text = "Enter the new title for the channel:",
+                    text = stringResource(Res.string.edit_channel_title_title),
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
                 TextField(
                     value = title,
                     onValueChange = { title = it },
-                    placeholder = { Text(text = "Enter title") },
+                    placeholder = { Text(text = stringResource(Res.string.edit_channel_title_placeholder)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     maxLines = 3,

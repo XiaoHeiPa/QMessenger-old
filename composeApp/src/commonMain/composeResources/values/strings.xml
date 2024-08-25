@@ -41,6 +41,11 @@
     <string name="channel_nickname">Nickname</string>
     <string name="edit_channel_nickname">Edit nickname</string>
     <string name="edit_channel_description">Edit description</string>
+    <string name="edit_channel_description_placeholder">Enter description</string>
+    <string name="edit_channel_description_title">Enter the new description for the channel:</string>
+    <string name="edit_channel_title_placeholder">Enter title</string>
+    <string name="edit_channel_title">Edit Channel title</string>
+    <string name="edit_channel_title_title">Enter the new title for the channel:</string>
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
     <string name="leave_channel">Leave channel</string>
